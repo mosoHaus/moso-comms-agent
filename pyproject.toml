@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "moso-comms-agent"
+version = "0.1.0"
+description = "Autonomous Gmail triage and drafting agent for moso.haus"
+requires-python = ">=3.11"
+dependencies = [
+    "anthropic>=0.40.0",
+    "google-auth>=2.0.0",
+    "google-auth-oauthlib>=1.0.0",
+    "google-api-python-client>=2.0.0",
+    "python-dotenv>=1.0.0",
+    "rich>=13.0.0",
+    "click>=8.1.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
+[project.scripts]
+moso-comms = "src.main:main"

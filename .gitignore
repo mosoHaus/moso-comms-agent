@@ -1,0 +1,29 @@
+# Secrets & auth
+.env
+credentials.json
+token.json
+
+# Database
+*.db
+
+# Personal data
+data/voice_profile.md
+data/sent_samples.md
+data/sender_allowlist.json
+data/decisions.jsonl
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
