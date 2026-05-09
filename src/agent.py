@@ -29,6 +29,7 @@ CATEGORY_COLORS = {
     "norton_and_quay": "blue",
     "personal": "yellow",
     "marketing": "dim",
+    "calendar": "cyan",
     "escalate": "red",
 }
 
@@ -97,12 +98,13 @@ def _build_system_prompt(voice_profile: str, samples: dict, corrections: dict) -
 ## YOUR JOB
 For each email: read it, classify it, then either draft a reply in Sean's voice or archive it.
 
-## FOUR CATEGORIES
+## FIVE CATEGORIES
 
 **PILATES** — moso.haus reformer Pilates students, class inquiries, instructor admin.
 **NORTON_AND_QUAY** — accountants / their networks responding to Sean's outreach for Norton & Quay tax law firm. Bizdev contacts.
 **PERSONAL** — friends, family, genuine contacts, startup/event world, services Sean uses. Anything real that isn't Pilates or N&Q.
 **MARKETING** — newsletters, promos, platform notifications, AI updates, Substacks, automated emails, cold outreach with no personal connection. AUTO-ARCHIVE THESE.
+**CALENDAR** — meeting invitations, event invites, calendar requests (Zoom/Meet links, .ics attachments, "let's catch up" scheduling emails, RSVP confirmations). Sean needs to accept/decline these himself — do NOT draft a reply UNLESS the email explicitly mentions a scheduling conflict or asks Sean to suggest alternative times, in which case draft a short conflict/reschedule email.
 **ESCALATE** — genuinely ambiguous. No draft, just label.
 
 ## PRIORITY (for non-marketing)
@@ -221,7 +223,7 @@ def run_once(console: Console):
 
     summary: dict = {
         "pilates": 0, "norton_and_quay": 0, "personal": 0,
-        "marketing": 0, "escalate": 0, "error": 0,
+        "marketing": 0, "calendar": 0, "escalate": 0, "error": 0,
     }
 
     for i, msg in enumerate(messages, 1):
@@ -326,6 +328,8 @@ def run_once(console: Console):
                 action_str = "labelled: marketing"
             elif category == "escalate":
                 action_str = "labelled: review"
+            elif category == "calendar":
+                action_str = "labelled: calendar/conflict — draft created" if draft_body else "labelled: calendar (accept/decline)"
             elif draft_body:
                 action_str = f"draft created — {(priority or '').lower()} → action/{category.replace('norton_and_quay', 'nq')}"
             else:

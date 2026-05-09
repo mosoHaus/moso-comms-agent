@@ -66,7 +66,7 @@ TOOLS = [
                 },
                 "category": {
                     "type": "string",
-                    "enum": ["pilates", "norton_and_quay", "personal", "marketing", "escalate"],
+                    "enum": ["pilates", "norton_and_quay", "personal", "marketing", "escalate", "calendar"],
                     "description": "Email category",
                 },
                 "priority": {
@@ -176,6 +176,27 @@ def _classify_and_act(
             add_label(message_id, "review")
             action = "escalated"
             results.append("Labelled: review")
+
+        elif category == "calendar":
+            if draft_body:
+                # Conflict detected — draft a reschedule email
+                to_addr = _extract_email(sender)
+                draft_subject = subject if subject.lower().startswith("re:") else f"Re: {subject}"
+                draft_id = create_draft(
+                    to=to_addr,
+                    subject=draft_subject,
+                    body=draft_body,
+                    thread_id=thread_id,
+                )
+                add_label(message_id, "calendar/conflict")
+                results.append(f"Draft created for conflict (ID: {draft_id})")
+                results.append("Labelled: calendar/conflict")
+                action = "calendar_conflict_draft"
+            else:
+                # Normal invite — label for Sean to accept/decline
+                add_label(message_id, "calendar")
+                results.append("Labelled: calendar (accept/decline needed)")
+                action = "calendar_invite"
 
         else:
             if draft_body:
