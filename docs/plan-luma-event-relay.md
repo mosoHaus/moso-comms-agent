@@ -16,7 +16,7 @@ Blueprint produced 2026-08-15 on branch `claude/luma-event-form-5ewjuo`. This is
 
 3. **The no-pay path exists: browser automation.** Claude driving the Luma web app with Sean's logged-in session (Playwright + Chromium, both already available in the Claude environment). Workable and $0/mo, but it's the fragile part of the system — see Risks.
 
-**The fork nobody asked about but matters most:** Luma Plus also drops the platform fee on paid tickets to **0%** (the free tier charges a platform fee on paid tickets — ~5% at last check; confirm the current rate on the Luma pricing page or your payment tab). At 5%, Plus breaks even at roughly **$1,180/month in gross ticket sales**. AXC/HXLQ sells paid tickets at every event. If monthly ticket volume is near or above that line, Plus is free-to-negative cost **and** replaces the entire fragile automation layer with a supported API + a ready-made MCP server. Check the number before building Path A below.
+**The fork nobody asked about but matters most:** Luma Plus also drops the platform fee on paid tickets to **0%** (the free tier charges a platform fee on paid tickets — ~5% at last check; confirm the current rate on the Luma pricing page or your payment tab). At 5%, Plus breaks even at roughly **$1,180/month in gross ticket sales**. AsiaX Circle sells paid tickets at every event. If monthly ticket volume is near or above that line, Plus is free-to-negative cost **and** replaces the entire fragile automation layer with a supported API + a ready-made MCP server. Check the number before building Path A below.
 
 ---
 
@@ -89,7 +89,7 @@ The form, database, validation, review gate, and notifications are **identical u
 
 ## Approach — build order
 
-1. **(30 min, useful immediately)** Create the "Event Submissions" Notion database + public form. Fields: submission type (New event); series/calendar (AXC / HXLQ / other); title; description; date; start & end time; timezone (default to home city); location (+ "hide until registration" flag); up to three ticket tiers (name, price, quantity, sales start/end — covers early bird + GA + one more); total capacity; cover image upload; collaborators (names + emails, "will be listed as hosts"); submitter name + email; notes. Agent-managed fields: Status (New / Needs info / Posted / Published / Rejected), Luma URL, Agent log. Share the form link in the volunteer group chat only. *Even before any automation exists, this kills the fragmented-WhatsApp-messages problem and Sean can post from clean structured rows.*
+1. **(30 min, useful immediately)** Create the "Event Submissions" Notion database + public form. Fields: submission type (New event); title; description; date; start & end time; timezone (default to home city); location (+ "hide until registration" flag); up to three ticket tiers (name, price, quantity, sales start/end — covers early bird + GA + one more); total capacity; cover image upload; collaborators (names + emails, "will be listed as hosts"); submitter name + email; notes. Agent-managed fields: Status (New / Needs info / Posted / Published / Rejected), Luma URL, Agent log. Share the form link in the volunteer group chat only. *Even before any automation exists, this kills the fragmented-WhatsApp-messages problem and Sean can post from clean structured rows.*
 2. **Prove the poster by hand once.** Capture the session cookie, drive one dummy event end-to-end onto a test calendar with Playwright (create → fill → tickets → private visibility → screenshot → delete). This is the go/no-go on Path A; if it fights back hard, that's the signal to price up Path B instead of sinking days in.
 3. **Wire the pipeline:** a Claude skill/prompt that reads Status=New rows → validates → posts → writes back URL + screenshot + Status=Posted → notifies Sean (Slack DM or email) → emails the submitter a confirmation. Failures → Status stays New, Sean gets the full submission so he can post manually (graceful degradation = today's status quo, never worse).
 4. **Trigger:** day 1, Sean says "process event submissions" in Claude. Once stable, a scheduled routine (e.g. twice daily) that stays silent unless it did something.
@@ -111,7 +111,7 @@ The form, database, validation, review gate, and notifications are **identical u
 2. **Where does the poster run** — cloud (Sean updates the environment's network allowlist for luma.com) or the Windows machine next to moso-comms-agent?
 3. **Notion form** (recommended) or Google Forms?
 4. **Review gate:** Sean flips Private→Public himself, or replies "publish" and Claude flips it? (Recommend keeping a human gate either way for the first months.)
-5. Which calendars/series does this serve (AXC only? is HXLQ a separate calendar?), default timezone, and currency.
+5. Confirm the target is the AsiaX Circle calendar only, plus default timezone and currency (presumably AEST/AUD, given Zeller in the post-event stack).
 6. How do volunteers hear back — email confirmation, Slack, or a read-only Notion view of the submissions board?
 
 ## Execution notes (for the build session)
