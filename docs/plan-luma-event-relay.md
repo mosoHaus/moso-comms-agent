@@ -116,16 +116,18 @@ The form, database, validation, review gate, and notifications are **identical u
 
 ## Decisions locked (15 Aug 2026)
 
-Sean's calls: ticket volume is ~$300/mo gross, well under the Plus break-even → **Path A** (browser automation, $0/mo). Poster runs **in the cloud**. Review gate: Sean flips Private→Public himself **or** replies "publish" — both supported. Target is the **AsiaX Circle calendar only**. The AXC content lives in the moso.Haus Notion workspace (the old AsiaX Circle teamspace is in Notion's trash), so the submissions database was created next to the AXC Member CRM under Teamspace Home.
+Sean's calls: ticket volume is ~$300/mo gross, well under the Plus break-even → **Path A** (browser automation, $0/mo). Poster runs **in the cloud**. Review gate: Sean flips Private→Public himself **or** replies "publish" — both supported. Target is the **AsiaX Circle calendar only**.
+
+**Workspace correction (same day):** the database was first built in Sean's personal moso.Haus Notion (the claude.ai Notion connector's workspace) — wrong home. It now lives in the **AsiaX Circle's Space workspace** (team@asiaxcircle.com), reached via the Composio Notion connection (account alias `AXC`), under "AsiaX Circle Crew Home space" — the same parent as the team's existing feedback form. The moso.Haus copy was moved to that workspace's Archive page and can be deleted. Because the official Notion API can't create form views or board views, the volunteer form must be added once in the Notion UI (steps below); Status/Timezone dropdown options were seeded via temporary rows, since the API can't define them in the schema either.
 
 **Built so far:**
-- Notion "AXC Event Submissions" database (data source `collection://bc684fa0-7ca3-4c4a-a969-a1a8515fea58`) with "Submit an event" form view (anonymous submissions on) and a "Review board" grouped by Status — https://app.notion.com/p/7b3d4ab9dfde4d8593893eb43e736e23
+- Notion "AXC Event Submissions" database in AsiaX Circle's Space — https://app.notion.com/p/3bd4fa3d3ed68155b36dfa642469c9c9 (database_id `3bd4fa3d-3ed6-8155-b36d-fa642469c9c9`), full schema incl. three ticket tiers, cover-image upload, agent-managed Status/Luma URL/Agent log.
 - `src/luma_poster.py` — Playwright CLI (status / request-code / submit-code / create / set-visibility), private-visibility-only creation, screenshots on every step, kill-switch aware. Selectors unverified until first live run.
-- `.claude/skills/axc-event-relay/SKILL.md` — the operating procedure future sessions follow.
+- `.claude/skills/axc-event-relay/SKILL.md` — the operating procedure future sessions follow, using Composio (account `AXC`) for all Notion reads/writes.
 
 **Remaining before first live post:**
 1. Sean adds Luma domains to the cloud environment's network allowlist (`lu.ma`, `luma.com`, `api.lu.ma`, `api.luma.com`, `images.lumacdn.com`, `cdn.lu.ma`).
-2. Sean opens the database → "Submit an event" view → Share form → copies the public link to the volunteer group chat.
+2. Someone on the AXC workspace creates the form view in the Notion UI: open the database → new view → **Form** → remove Status, Luma URL, Agent log, Submitted from the questions → Share form → "Anyone on the web with link" → post the link in the volunteer chat.
 3. First live run: login via Gmail code, post a dummy event to a test calendar, tune selectors, delete the dummy.
 
 ## Execution notes (for the build session)

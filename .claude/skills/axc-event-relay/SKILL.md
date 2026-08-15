@@ -1,6 +1,6 @@
 ---
 name: axc-event-relay
-description: Process AsiaX Circle volunteer event submissions from the Notion "AXC Event Submissions" database and post them to Luma as private events for Sean's review. Trigger on "process event submissions", "post the new events", "any new event submissions?", "publish <event>", or a scheduled relay run.
+description: Process AsiaX Circle volunteer event submissions from the Notion "AXC Event Submissions" database (AXC workspace, via Composio) and post them to Luma as private events for Sean's review. Trigger on "process event submissions", "post the new events", "any new event submissions?", "publish <event>", or a scheduled relay run.
 ---
 
 # AXC Event Relay
@@ -12,11 +12,27 @@ never touch Luma; Sean stays the only person who can make anything public.
 
 ## Fixed references
 
-- Submissions database: https://app.notion.com/p/7b3d4ab9dfde4d8593893eb43e736e23
-- Data source: `collection://bc684fa0-7ca3-4c4a-a969-a1a8515fea58`
+- Submissions database (in the **AsiaX Circle's Space** workspace, under
+  "AsiaX Circle Crew Home space"): https://app.notion.com/p/3bd4fa3d3ed68155b36dfa642469c9c9
+  — database_id `3bd4fa3d-3ed6-8155-b36d-fa642469c9c9`
+- **Notion access is via Composio only**, account alias `AXC`
+  (team@asiaxcircle.com). The claude.ai Notion connector is Sean's personal
+  moso.Haus workspace and does NOT see this database — do not use it here.
+  Pass `account: "AXC"` on every Composio Notion call. Discover tools with
+  COMPOSIO_SEARCH_TOOLS; the ones that matter:
+  - `NOTION_QUERY_DATABASE_WITH_FILTER` — find rows to process
+  - `NOTION_FETCH_ROW` — full row incl. Cover image file URLs
+  - `NOTION_UPDATE_ROW_DATABASE` — write Status / Luma URL / Agent log
+- New-rows filter:
+  `{"or": [{"property": "Status", "select": {"is_empty": true}}, {"property": "Status", "select": {"equals": "New"}}]}`
+- Status values: `New`, `Needs info`, `Posting`, `Posted (private)`,
+  `Published`, `Rejected` (select, exact case).
 - Luma account: sean@moso.haus · target calendar: **AsiaX Circle** (never any other)
 - Poster CLI: `python -m src.luma_poster …` (needs `pip install -e ".[luma]"`; Chromium is preinstalled in the cloud env)
 - Kill switch: if `data/KILL_SWITCH` exists, stop and report — same convention as the comms agent.
+- Optional cross-link: the AXC Projects tracker (database
+  `1d880217-a6e1-45f3-855d-fd75edafb9f8`) has a "Luma Link" URL property —
+  if a project row obviously matches the event, fill it in after posting.
 
 ## Hard rules
 
@@ -33,7 +49,7 @@ never touch Luma; Sean stays the only person who can make anything public.
 
 ## Workflow: process new submissions
 
-1. Query the data source for rows where `Status` is empty or `"New"`.
+1. Query the database (filter above) for rows to process.
 2. Validate each row:
    - Required: Event title, Description, Start (with time), Venue name or
      Address, Ticket 1 name + price, Your name, Your email.
@@ -51,15 +67,16 @@ never touch Luma; Sean stays the only person who can make anything public.
      the numeric code.
    - `python -m src.luma_poster submit-code --code <code>`
 4. For each valid row, set `Status = "Posting"`, then:
-   - Download the Cover image attachment (if any) to `data/luma_events/`.
+   - Fetch the row's Cover image file URL (Notion-hosted URLs are
+     time-limited — download to `data/luma_events/` immediately).
    - Build the spec JSON (schema in `src/luma_poster.py` docstring) with
      `"calendar": "AsiaX Circle"` and local wall times in the row's timezone.
    - `python -m src.luma_poster create --spec <file>` — the poster always
      creates with Private visibility.
 5. On success:
-   - Update the row: `Status = "Posted (private)"`, `userDefined:Luma URL` =
-     event URL, `Agent log` = timestamped one-liner of what was created
-     (tiers, capacity, anything assumed).
+   - Update the row: `Status = "Posted (private)"`, `Luma URL` = event URL,
+     `Agent log` = timestamped one-liner of what was created (tiers,
+     capacity, anything assumed).
    - Message Sean (Slack DM if available, else email): event title, private
      link, screenshot, and any assumptions — ask him to review and flip to
      Public, or reply "publish <title>".
@@ -80,6 +97,10 @@ himself in Luma, just update the Status when you notice the mismatch.
 - Network allowlist must include: `lu.ma`, `luma.com`, `api.lu.ma`,
   `api.luma.com`, `images.lumacdn.com`, `cdn.lu.ma` (extend if the first run
   surfaces more asset domains — check the poster's error screenshots).
+- The volunteer form is a Notion form view on the database, created in the
+  Notion UI (the public API cannot create form views). If it's missing, ask
+  Sean to add it: open the database → new view → Form → hide Status, Luma
+  URL, Agent log, Submitted → Share form → "Anyone on the web with link".
 - The poster's selectors were written blind (luma.com was egress-blocked at
   authoring time). On the first live run, expect to fix selectors in
   `SELECTORS` / flow functions in `src/luma_poster.py`, testing against a
