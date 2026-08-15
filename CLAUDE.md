@@ -6,6 +6,9 @@ Circle event relay. See `README.md` for the comms agent and
 
 ## Notion: which account for which workspace
 
+> **All AsiaX Circle Notion access goes via Composio, account alias AXC
+> (team@asiaxcircle.com), never the claude.ai Notion connector.**
+
 Sean has **two** Notion workspaces, and they are reached through **different
 connections**. Picking the wrong one silently writes to the wrong place.
 
