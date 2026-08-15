@@ -6,6 +6,11 @@ token.json
 # Database
 *.db
 
+# Luma poster runtime state
+data/luma_browser/
+data/luma_shots/
+data/luma_events/
+
 # Personal data
 data/voice_profile.md
 data/sent_samples.md

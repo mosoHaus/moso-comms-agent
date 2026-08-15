@@ -114,6 +114,20 @@ The form, database, validation, review gate, and notifications are **identical u
 5. Confirm the target is the AsiaX Circle calendar only, plus default timezone and currency (presumably AEST/AUD, given Zeller in the post-event stack).
 6. How do volunteers hear back — email confirmation, Slack, or a read-only Notion view of the submissions board?
 
+## Decisions locked (15 Aug 2026)
+
+Sean's calls: ticket volume is ~$300/mo gross, well under the Plus break-even → **Path A** (browser automation, $0/mo). Poster runs **in the cloud**. Review gate: Sean flips Private→Public himself **or** replies "publish" — both supported. Target is the **AsiaX Circle calendar only**. The AXC content lives in the moso.Haus Notion workspace (the old AsiaX Circle teamspace is in Notion's trash), so the submissions database was created next to the AXC Member CRM under Teamspace Home.
+
+**Built so far:**
+- Notion "AXC Event Submissions" database (data source `collection://bc684fa0-7ca3-4c4a-a969-a1a8515fea58`) with "Submit an event" form view (anonymous submissions on) and a "Review board" grouped by Status — https://app.notion.com/p/7b3d4ab9dfde4d8593893eb43e736e23
+- `src/luma_poster.py` — Playwright CLI (status / request-code / submit-code / create / set-visibility), private-visibility-only creation, screenshots on every step, kill-switch aware. Selectors unverified until first live run.
+- `.claude/skills/axc-event-relay/SKILL.md` — the operating procedure future sessions follow.
+
+**Remaining before first live post:**
+1. Sean adds Luma domains to the cloud environment's network allowlist (`lu.ma`, `luma.com`, `api.lu.ma`, `api.luma.com`, `images.lumacdn.com`, `cdn.lu.ma`).
+2. Sean opens the database → "Submit an event" view → Share form → copies the public link to the volunteer group chat.
+3. First live run: login via Gmail code, post a dummy event to a test calendar, tune selectors, delete the dummy.
+
 ## Execution notes (for the build session)
 
 - Build step 1 (form + DB) first and ship it same-day; it has standalone value.
