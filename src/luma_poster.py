@@ -75,13 +75,48 @@ def _result(ok: bool, **fields):
     sys.exit(0 if ok else 1)
 
 
+def _chromium_path() -> str | None:
+    """Find a preinstalled Chromium so we never trigger `playwright install`.
+
+    Cloud images ship a pinned build that often doesn't match the pip
+    playwright version's expected revision. LUMA_CHROMIUM overrides.
+    """
+    explicit = os.environ.get("LUMA_CHROMIUM")
+    if explicit and Path(explicit).exists():
+        return explicit
+    root = Path(os.environ.get("PLAYWRIGHT_BROWSERS_PATH", "/opt/pw-browsers"))
+    candidates = sorted(root.glob("chromium*/chrome-linux/chrome"), reverse=True)
+    return str(candidates[0]) if candidates else None
+
+
 def _launch(p, headed: bool = False):
     BROWSER_DIR.mkdir(parents=True, exist_ok=True)
-    return p.chromium.launch_persistent_context(
-        str(BROWSER_DIR),
-        headless=not headed and os.environ.get("LUMA_HEADED") != "1",
-        viewport={"width": 1440, "height": 1000},
-    )
+    args = ["--no-sandbox"]
+
+    # Sandboxed/cloud egress proxies re-terminate TLS, and some can't parse
+    # Chromium's TLS 1.3 ClientHello — every navigation dies with
+    # ERR_CONNECTION_RESET while curl works fine. Capping at TLS 1.2 fixes it
+    # without weakening verification (certs are still fully validated).
+    if os.environ.get("LUMA_TLS12", "1") == "1":
+        args.append("--ssl-version-max=tls1.2")
+
+    kwargs = {
+        "headless": not headed and os.environ.get("LUMA_HEADED") != "1",
+        "viewport": {"width": 1440, "height": 1000},
+        "args": args,
+    }
+    chromium = _chromium_path()
+    if chromium:
+        kwargs["executable_path"] = chromium
+
+    # Chromium doesn't read HTTPS_PROXY from the environment the way curl does.
+    # In sandboxed/cloud runs all egress goes through a local policy proxy, so
+    # pass it explicitly or every navigation fails with ERR_CONNECTION_RESET.
+    proxy = os.environ.get("HTTPS_PROXY") or os.environ.get("https_proxy")
+    if proxy:
+        kwargs["proxy"] = {"server": proxy}
+
+    return p.chromium.launch_persistent_context(str(BROWSER_DIR), **kwargs)
 
 
 def _is_logged_in(page) -> bool:
@@ -133,10 +168,14 @@ def request_code(email: str):
         page = ctx.pages[0] if ctx.pages else ctx.new_page()
         try:
             page.goto(LUMA_SIGNIN, wait_until="domcontentloaded")
-            page.wait_for_timeout(1500)
+            page.wait_for_timeout(2000)
             page.locator(SELECTORS["signin_email"]).first.fill(email)
-            page.keyboard.press("Enter")
-            page.wait_for_timeout(3000)
+            cont = page.get_by_role("button", name="Continue with Email")
+            if cont.count():
+                cont.first.click()
+            else:
+                page.keyboard.press("Enter")
+            page.wait_for_timeout(5000)
             _result(True, note="code requested — read it from Gmail, then run submit-code",
                     screenshot=_shot(page, "request-code"))
         except Exception as e:
