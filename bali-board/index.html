@@ -1,0 +1,1622 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Bali · 27–30 Aug</title>
+<meta name="description" content="Group trip board. Itinerary, map, ideas, tasks." />
+<meta name="theme-color" content="#12151C" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<style>
+:root{
+  --ink:#12151C; --paper:#E7EAEE; --card:#fff; --rule:#C6CDD5;
+  --muted:#6B7683; --stamp:#D93A1F; --go:#0F6B4F; --tint:#F4F6F8;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+html{scroll-behavior:smooth}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased;padding-bottom:80px}
+.wrap{max-width:820px;margin:0 auto;padding:0 14px}
+.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+
+.tkt{background:var(--ink);color:var(--paper);padding:22px 0 18px}
+.tkt-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.tkt h1{font-family:var(--mono);font-size:40px;line-height:.92;font-weight:700;letter-spacing:-.02em;margin:8px 0 0}
+.route{font-family:var(--mono);font-size:12px;letter-spacing:.14em;opacity:.65;margin-top:8px}
+.tkt .eyebrow{color:rgba(231,234,238,.55)}
+.count{font-family:var(--mono);text-align:right;line-height:1}
+.count b{font-size:30px;font-weight:700;display:block}
+.count span{font-size:10px;letter-spacing:.16em;opacity:.6}
+.count .sm{font-size:18px;margin-top:12px}
+.perf{height:18px;background:var(--ink);border-bottom:2px dashed var(--paper);position:relative}
+.perf:before,.perf:after{content:"";position:absolute;bottom:-11px;width:20px;height:20px;background:var(--paper);border-radius:50%}
+.perf:before{left:-10px}.perf:after{right:-10px}
+
+.sec{margin-top:26px;scroll-margin-top:66px}
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:8px}
+.sec-title{font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+.card{background:var(--card);border:1px solid var(--rule)}
+.card+.card{border-top:none}
+.step{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--muted);margin-right:8px}
+
+/* sticky jump bar */
+.nav{position:sticky;top:0;z-index:400;background:rgba(231,234,238,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--rule);margin-bottom:-14px}
+.nav-in{max-width:820px;margin:0 auto;padding:8px 14px;display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.nav-in::-webkit-scrollbar{display:none}
+.jump{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;padding:7px 10px;border:1px solid var(--rule);background:var(--card);color:var(--ink);white-space:nowrap;cursor:pointer;font-weight:600}
+.jump b{font-weight:700;margin-left:5px;color:var(--stamp)}
+.jump.done b{color:var(--go)}
+
+.tips{background:var(--ink);color:var(--paper);padding:14px;margin-top:18px}
+.tips ol{margin:8px 0 0;padding:0 0 0 18px}
+.tips li{font-size:13.5px;line-height:1.5;margin-bottom:3px}
+.tips .eyebrow{color:rgba(231,234,238,.55)}
+.tips-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{font-family:var(--mono);font-size:12px;padding:8px 11px;border:1px solid var(--rule);background:var(--card);color:var(--ink);font-weight:600;cursor:pointer;text-transform:none;letter-spacing:.02em}
+.chip.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.pick{padding:10px 12px 12px 44px;background:var(--tint);border-top:1px dashed var(--rule)}
+
+/* step 1 gate */
+.gate{padding:16px}
+.gate h2{font-family:var(--mono);font-size:18px;margin:6px 0 2px;letter-spacing:-.01em}
+.gate p{font-size:13.5px;color:var(--muted);margin:0 0 4px;line-height:1.45}
+.gate .chips .chip{font-size:13px;padding:10px 13px}
+.locked{margin-top:18px;border:1px dashed var(--rule);background:rgba(255,255,255,.5);padding:14px}
+.locked ul{margin:8px 0 0;padding:0 0 0 18px;color:var(--muted);font-size:13px;line-height:1.6}
+.peek{background:none;border:none;color:var(--muted);font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-decoration:underline;padding:10px 0 0;cursor:pointer;text-transform:uppercase}
+
+/* you-are + nudges */
+.you{display:flex;align-items:center;gap:10px;padding:11px 12px;flex-wrap:wrap}
+.you-nm{font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:.06em}
+.nudges{display:flex;gap:6px;flex-wrap:wrap;padding:0 12px 12px}
+.nudge{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;padding:7px 10px 7px 12px;border:1px solid var(--rule);background:var(--card);color:var(--ink);cursor:pointer;text-align:left;font-weight:600}
+.nudge.act{box-shadow:inset 3px 0 0 var(--stamp)}
+.nudge.ok{box-shadow:inset 3px 0 0 var(--go);color:var(--go)}
+
+/* day tabs */
+.daytabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px}
+.daytab{font-family:var(--mono);padding:9px 4px;border:1px solid var(--rule);background:var(--card);color:var(--ink);cursor:pointer;text-align:center;letter-spacing:.02em;text-transform:none}
+.daytab b{display:block;font-size:17px;font-weight:700;line-height:1.05}
+.daytab span{font-size:9px;letter-spacing:.14em;opacity:.6;text-transform:uppercase}
+.daytab .pins{display:block;font-size:8.5px;letter-spacing:.1em;color:var(--muted);margin-top:2px;min-height:10px}
+.daytab.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.daytab.on .pins{color:rgba(231,234,238,.5)}
+
+.dayhead{padding:12px 12px 10px;border-bottom:1px solid var(--rule);display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.dayhead h3{margin:0;font-size:17px;letter-spacing:-.01em}
+.dayhead .sub{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:3px}
+
+/* map */
+#map{height:260px;background:#DFE4E9}
+.leaflet-container{font-family:var(--sans)}
+.mpin{width:26px;height:26px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--card);border:2px solid var(--ink);display:grid;place-items:center;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.mpin i{transform:rotate(45deg);font:700 12px/1 var(--mono);font-style:normal;color:var(--ink)}
+.mpin.grp{background:var(--ink)}
+.mpin.grp i{color:var(--paper)}
+/* The base is a square, not a teardrop — it's a place you return to, not a stop. */
+.mbase{width:30px;height:30px;border-radius:7px;background:var(--ink);border:2px solid #fff;display:grid;place-items:center;box-shadow:0 2px 7px rgba(0,0,0,.4)}
+.mbase i{font-style:normal;font-size:15px;line-height:1}
+.basebar{display:flex;align-items:center;gap:8px;padding:9px 12px;border-top:1px solid var(--rule);background:var(--tint);flex-wrap:wrap}
+.basebar .bl{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.basebar .bv{font-size:12.5px;line-height:1.3;flex:1;min-width:140px}
+.basebar .bv a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--rule)}
+.basebar .bv .none{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--stamp)}
+.pin-t{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.pin-a{font-size:13.5px;font-weight:600;margin:2px 0 3px}
+.pin-l{font-size:12px;color:var(--muted);line-height:1.35}
+.map-note{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;color:var(--muted);padding:9px 12px;border-top:1px solid var(--rule);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.map-off{padding:20px 14px;font-size:13px;color:var(--muted);line-height:1.45}
+
+/* itinerary table */
+.thead,.trow{display:grid;grid-template-columns:30px 74px 92px minmax(0,1.25fr) minmax(0,1.5fr) 64px;gap:10px;padding:11px 12px}
+.thead{background:var(--tint);border-bottom:1px solid var(--rule)}
+.thead span{font-family:var(--mono);font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
+.trow{border-bottom:1px solid var(--rule);font-size:13.5px;align-items:start;background:var(--card)}
+.trowwrap:last-child .trow{border-bottom:none}
+.trow.grp{background:#FAFBF6;box-shadow:inset 3px 0 0 var(--ink)}
+.c-no{font-family:var(--mono);font-size:11px;font-weight:700}
+.numgrip{width:26px;height:26px;display:grid;place-items:center;border:1px solid var(--rule);background:var(--card);color:var(--ink);font:700 11px var(--mono);cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;padding:0;letter-spacing:0}
+.trow.grp .numgrip{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.numgrip:active{cursor:grabbing}
+.c-time,.c-cost{font-family:var(--mono);font-size:11.5px;color:var(--muted);padding-top:4px}
+.c-time i{font-style:normal;display:block;color:var(--rule);margin-top:2px}
+.c-cost{text-align:right;word-break:break-word}
+.c-act{line-height:1.35;font-weight:600;padding-top:2px}
+.c-act .loc{font-weight:400;font-size:12px;color:var(--muted);display:block;margin-top:3px;line-height:1.35}
+.c-act .loc a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--rule)}
+.c-act .unpinned{font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--stamp)}
+.addloc{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;padding:3px 6px;border:1px dashed var(--rule);background:transparent;color:var(--muted);cursor:pointer;font-weight:600}
+.addloc:hover{border-color:var(--ink);color:var(--ink);opacity:1}
+.c-note{font-size:12.5px;color:var(--muted);line-height:1.4;padding-top:3px}
+.ty{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:4px 7px;display:inline-block;white-space:nowrap;border-radius:2px;font-weight:600}
+.grpchip{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;padding:3px 6px;background:var(--ink);color:var(--paper);display:inline-block;margin-top:4px;font-weight:700}
+.ty-arrive,.ty-depart{background:#EAF1FB;color:#274B7A}
+.ty-travel{background:#F0EEF9;color:#4A3F7A}
+.ty-food{background:#FDF0E6;color:#8A4A18}
+.ty-seafood{background:#FDECEC;color:#8A2C2C}
+.ty-drinks{background:#FCEFF6;color:#7A2B57}
+.ty-snack{background:#FBF3E0;color:#7A5B12}
+.ty-activity{background:#E9F5EE;color:#1F5E43}
+.ty-beach{background:#E6F4F7;color:#1C5A68}
+.ty-spa{background:#F3EEF7;color:#5A3A72}
+.ty-hotel{background:#EEF0F3;color:#3D4753}
+.ty-free{background:#F1F3F5;color:#5A6470}
+.rowtools{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.emptyday{padding:18px 12px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--muted)}
+.trowwrap.dragging .trow{opacity:.95;box-shadow:0 10px 26px rgba(0,0,0,.2)}
+.trowwrap.dragging{position:relative;z-index:20}
+.trowwrap.dropat .trow{box-shadow:inset 0 3px 0 var(--stamp)}
+.trowwrap.dropend .trow{box-shadow:inset 0 -3px 0 var(--stamp)}
+
+@media (max-width:639px){
+  .thead{display:none}
+  .trow{grid-template-columns:30px 1fr auto;gap:4px 8px;
+        grid-template-areas:"no time cost" "no type type" "no act act" "no note note"}
+  .c-no{grid-area:no}.c-time{grid-area:time;padding-top:3px}.c-cost{grid-area:cost;padding-top:3px;max-width:48vw}
+  .c-type{grid-area:type;margin:2px 0}.c-act{grid-area:act}.c-note{grid-area:note}
+  .c-time i{display:inline;margin-left:6px}
+  .rowtools{grid-column:2/-1}
+}
+
+/* votes */
+.opt{padding:10px 12px;cursor:pointer;position:relative}
+.optwrap{border-bottom:1px solid var(--rule)}
+.optwrap:last-child{border-bottom:none}
+.opt-bar{position:absolute;top:0;bottom:0;left:0;background:#EDF0F3;transition:width .3s ease}
+.opt-in{position:relative;display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.opt-l{font-size:14px;font-weight:600}
+.opt-a{font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-top:2px}
+.opt-n{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.35}
+.opt-c{font-family:var(--mono);font-size:16px;font-weight:700;flex-shrink:0}
+.opt.mine{box-shadow:inset 3px 0 0 var(--ink)}
+.voters{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:4px;line-height:1.4}
+.subhead{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);padding:9px 12px;background:var(--tint);border-bottom:1px solid var(--rule)}
+
+/* tasks */
+.task{border-bottom:1px solid var(--rule);background:var(--card)}
+.taskwrap:last-child .task{border-bottom:none}
+.task-top{display:flex;gap:10px;padding:11px 12px;align-items:flex-start}
+.box{width:20px;height:20px;border:1.5px solid var(--ink);flex-shrink:0;margin-top:1px;display:grid;place-items:center;background:transparent;padding:0;cursor:pointer;color:var(--ink)}
+.box.on{background:var(--go);border-color:var(--go);color:#fff}
+.task-l{font-size:14px;line-height:1.3;font-weight:600}
+.task.done .task-l{text-decoration:line-through;color:var(--muted);font-weight:400}
+.task-h{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:3px}
+.task-meta{display:flex;gap:6px;align-items:center;margin-top:7px;flex-wrap:wrap}
+.taskgrip{width:22px;height:22px;display:grid;place-items:center;border:1px solid var(--rule);background:var(--card);color:var(--muted);cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;padding:0;font-size:10px;flex-shrink:0;letter-spacing:0}
+.taskgrip:active{cursor:grabbing}
+.taskwrap.dragging .task{opacity:.95;box-shadow:0 10px 26px rgba(0,0,0,.2)}
+.taskwrap.dragging{position:relative;z-index:20}
+.taskwrap.dropat .task{box-shadow:inset 0 3px 0 var(--stamp)}
+.taskwrap.dropend .task{box-shadow:inset 0 -3px 0 var(--stamp)}
+.bar2{height:6px;background:var(--tint);border:1px solid var(--rule);border-bottom:none}
+.bar2 i{display:block;height:100%;background:var(--go)}
+.filters{display:flex;gap:6px;flex-wrap:wrap;padding:10px 12px;background:var(--tint);border-bottom:1px solid var(--rule)}
+.fl{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:6px 9px;border:1px solid var(--rule);background:var(--card);color:var(--muted);cursor:pointer;font-weight:600}
+.fl.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+
+.pax{border-bottom:1px solid var(--rule)}
+.pax:last-child{border-bottom:none}
+.pax-top{display:flex;align-items:center;gap:10px;padding:10px 12px;width:100%;text-align:left;background:transparent;border:none;color:var(--ink);cursor:pointer;letter-spacing:0;text-transform:none;font-size:inherit}
+.pax-no{font-family:var(--mono);font-size:10.5px;color:var(--rule);width:18px;flex-shrink:0}
+.pax-nm{font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:.02em}
+.pax-legs{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:3px;display:flex;gap:14px;flex-wrap:wrap}
+.pax-legs i{font-style:normal;color:var(--ink)}
+.pax-legs .gap{color:var(--rule);letter-spacing:.12em}
+.dot{width:8px;height:8px;flex-shrink:0;border:1.5px solid var(--rule);border-radius:50%;margin-left:auto}
+.dot.full{background:var(--go);border-color:var(--go)}
+.pax-edit{padding:0 12px 12px}
+
+/* collapsibles */
+.fold{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px;background:var(--card);border:1px solid var(--rule);color:var(--ink);cursor:pointer;text-align:left;letter-spacing:0;text-transform:none;font-size:inherit}
+.fold-t{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+.fold-s{font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
+.caret{font-family:var(--mono);font-size:11px;color:var(--muted)}
+
+input[type=text],input[type=time],textarea,select{width:100%;font-family:var(--mono);font-size:14px;padding:9px 10px;border:1px solid var(--rule);background:var(--card);color:var(--ink);border-radius:0;-webkit-appearance:none}
+textarea{font-family:var(--sans);resize:vertical;min-height:60px;line-height:1.4}
+input::placeholder,textarea::placeholder{color:#A7B0BA}
+label.f{display:block;margin-bottom:8px}
+label.f>span{display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.check{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);margin-bottom:10px;cursor:pointer}
+.check input{width:18px;height:18px;-webkit-appearance:auto;appearance:auto;padding:0;flex-shrink:0}
+
+button{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--ink);background:var(--ink);color:var(--paper);padding:10px 14px;cursor:pointer;border-radius:0;font-weight:600}
+button:hover{opacity:.82}
+button.ghost{background:transparent;color:var(--ink)}
+button.light{background:transparent;color:var(--paper);border-color:rgba(231,234,238,.4)}
+button.tiny{padding:6px 9px;font-size:10px;letter-spacing:.08em}
+button:disabled{opacity:.4;cursor:default}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--stamp);outline-offset:2px}
+.btnrow{display:flex;gap:6px;flex-wrap:wrap}
+.tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;padding:5px 8px;border:1px solid var(--rule);color:var(--muted);background:var(--card);cursor:pointer}
+.tag.own{border-color:var(--ink);color:var(--ink);font-weight:700}
+.tag.hot{border-color:var(--stamp);color:var(--stamp)}
+.tag.go{border-color:var(--go);color:var(--go);font-weight:700}
+
+.notes{padding:0 12px 12px 44px;background:var(--tint);border-top:1px dashed var(--rule)}
+.note{padding:9px 0;border-bottom:1px solid var(--rule)}
+.note:last-of-type{border-bottom:none}
+.note-h{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:flex;gap:8px;align-items:center}
+.note-b{font-size:13.5px;line-height:1.45;margin-top:3px;white-space:pre-wrap}
+.note-x{border:none;background:transparent;color:var(--muted);padding:2px 4px;font-size:10px;margin-left:auto}
+.nonotes{font-family:var(--mono);font-size:11px;color:var(--muted);padding:10px 0 6px;letter-spacing:.06em}
+
+.slot{display:flex;gap:10px;padding:5px 0;font-size:14px;align-items:baseline}
+.slot .t{font-family:var(--mono);font-size:11px;color:var(--muted);min-width:58px;flex-shrink:0;padding-top:2px}
+.slot .w{line-height:1.35}
+.slot .w em{font-style:normal;color:var(--muted);font-size:12.5px;display:block;margin-top:1px}
+
+/* the line between "what we're doing" and "what we could do" */
+.split{margin:38px 0 22px;border-top:2px dashed var(--rule);position:relative;height:0}
+.split span{position:absolute;left:50%;top:-9px;transform:translateX(-50%);background:var(--paper);padding:0 12px;
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.recintro{font-size:13px;line-height:1.5;color:var(--muted);margin:0 0 10px}
+
+#rcmap{height:250px;background:#DFE4E9}
+.rec{border-bottom:1px solid var(--rule);padding:11px 12px;display:grid;grid-template-columns:28px 1fr auto;gap:4px 10px;
+  grid-template-areas:"no name rate" "no meta meta" "no note note" "no act act"}
+.rec:last-child{border-bottom:none}
+.rec-no{grid-area:no;font-family:var(--mono);font-size:11px;font-weight:700;width:26px;height:26px;display:grid;place-items:center;
+  border:1px solid var(--rule);color:var(--ink)}
+.rec-no.off{color:var(--rule);border-style:dashed}
+.rec-nm{grid-area:name;font-size:14px;font-weight:600;line-height:1.3}
+.rec-rt{grid-area:rate;font-family:var(--mono);font-size:11.5px;font-weight:700;white-space:nowrap;padding-top:2px}
+.rec-rt i{font-style:normal;font-weight:400;color:var(--muted);font-size:10px;display:block;text-align:right}
+.rec-mt{grid-area:meta;font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:1px}
+.rec-mt b{color:var(--ink);font-weight:600}
+.rec-nt{grid-area:note;font-size:12.5px;color:var(--muted);line-height:1.4;margin-top:3px}
+.rec-ac{grid-area:act;display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
+.rec.pick{background:#FAFBF6}
+.pickchip{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;padding:3px 6px;background:var(--go);color:#fff;font-weight:700}
+.pickchip.vote{background:var(--ink)}
+.rec.pick{box-shadow:inset 3px 0 0 var(--go)}
+
+.rrow{display:grid;grid-template-columns:112px 1fr;gap:10px;padding:7px 0;border-bottom:1px solid var(--rule);align-items:baseline}
+.rrow:last-child{border-bottom:none}
+.rk{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.rv{font-size:12.5px;line-height:1.45}
+.rrow.warn .rk{color:var(--stamp)}
+.rrow.ok .rk{color:var(--go)}
+.rrow.tot{border-bottom:none;border-top:2px solid var(--ink);margin-top:6px;padding-top:9px}
+.rtext{font-size:12.5px;line-height:1.5;color:var(--muted)}
+@media (max-width:559px){ .rrow{grid-template-columns:1fr;gap:2px} }
+
+.bar{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:10px 0 0;font-family:var(--mono);font-size:10.5px;color:var(--muted)}
+.foot{margin-top:24px;font-size:12px;color:var(--muted);line-height:1.5}
+.err{background:var(--stamp);color:#fff;padding:10px 14px;font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;margin-top:14px}
+.hide{display:none}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<div class="tkt">
+  <div class="wrap">
+    <div class="tkt-top">
+      <div>
+        <div class="eyebrow">Group trip · 15 pax</div>
+        <h1>BALI</h1>
+        <div class="route">→ DPS · 27–30 AUG 26</div>
+      </div>
+      <div class="count">
+        <b id="ct-filled">0/15</b><span>CHECKED IN</span>
+        <b class="sm" id="ct-days">—</b><span>DAYS OUT</span>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="wrap"><div class="perf"></div></div>
+
+<div class="nav hide" id="nav"><div class="nav-in" id="nav-in"></div></div>
+
+<div class="wrap">
+  <div id="err" class="err hide"></div>
+
+  <!-- STEP 1 -->
+  <div class="sec" id="sec-who"></div>
+
+  <!-- everything below only once you've said who you are -->
+  <div id="board" class="hide">
+
+    <div id="tips" class="tips">
+      <div class="tips-head">
+        <div class="eyebrow">How this works</div>
+        <button class="light tiny" id="hide-tips">Got it, hide</button>
+      </div>
+      <ol>
+        <li>The board shows <b>one day at a time</b> — use the day tabs. Ideas follow the same day.</li>
+        <li>Anything marked <b>EVERYONE</b> is a whole-group thing. Don't miss those.</li>
+        <li>Add a location and it drops a numbered pin on the map, matching the row number.</li>
+        <li>Drag the number to reorder. Put your name on tasks and leave notes as things progress.</li>
+      </ol>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="sec" id="sec-itin">
+      <div class="sec-head">
+        <div class="sec-title"><span class="step">02</span>Itinerary</div>
+        <span class="eyebrow" id="sc-count"></span>
+      </div>
+      <div class="daytabs" id="daytabs"></div>
+      <div class="card" id="dayhead"></div>
+      <div class="card">
+        <div id="map"></div>
+        <div class="map-note"><span id="map-note"></span><span id="map-legend"></span></div>
+        <div class="basebar" id="basebar"></div>
+      </div>
+      <div class="card" id="sched"></div>
+      <div class="card" id="sched-add-wrap">
+        <button class="fold" id="sched-add-fold">
+          <span><span class="fold-t">+ Add to this day</span></span><span class="caret">▾</span>
+        </button>
+        <div class="hide" id="sched-add" style="padding:12px;border-top:1px solid var(--rule)">
+          <label class="f"><span>What's happening</span><input type="text" id="new-sc" placeholder="Dinner at Naughty Nuri's" /></label>
+          <div class="grid2">
+            <label class="f"><span>Time</span><input type="text" id="new-sc-time" placeholder="6:00 PM" /></label>
+            <label class="f"><span>How long</span><input type="text" id="new-sc-dur" placeholder="2h" /></label>
+          </div>
+          <div class="grid2">
+            <label class="f"><span>Type</span><select id="new-sc-type"></select></label>
+            <label class="f"><span>Approx cost</span><input type="text" id="new-sc-cost" placeholder="250k pp" /></label>
+          </div>
+          <label class="f"><span>Location — paste a Maps link or type the place</span>
+            <input type="text" id="new-sc-loc" placeholder="Naughty Nuri's Ubud, or a Google Maps link" /></label>
+          <label class="f"><span>Notes</span><input type="text" id="new-sc-note" placeholder="Booking name, what to bring" /></label>
+          <label class="check"><input type="checkbox" id="new-sc-everyone" /> This one's for everyone</label>
+          <button id="add-sc">Add to day</button>
+        </div>
+      </div>
+      <div class="bar"><span id="sc-hint"></span></div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="sec" id="sec-vote">
+      <div class="sec-head">
+        <div class="sec-title"><span class="step">03</span>Things to do &amp; vote</div>
+        <span class="eyebrow" id="vt-count"></span>
+      </div>
+      <div class="daytabs" id="daytabs2"></div>
+      <div class="card" id="votes"></div>
+      <div class="card">
+        <button class="fold" id="opt-add-fold">
+          <span><span class="fold-t">+ Add an idea</span></span><span class="caret">▾</span>
+        </button>
+        <div class="hide" id="opt-add" style="padding:12px;border-top:1px solid var(--rule)">
+          <label class="f"><span>What do you want to do</span><input type="text" id="new-opt" placeholder="Sunset at Uluwatu" /></label>
+          <div class="grid2">
+            <label class="f"><span>Which day</span><select id="new-opt-day"></select></label>
+            <label class="f"><span>Rough time</span><input type="text" id="new-opt-when" placeholder="8–3" /></label>
+          </div>
+          <label class="f"><span>Detail, optional</span><input type="text" id="new-opt-note" placeholder="Cost, travel time, link" /></label>
+          <button id="add-opt">Add idea</button>
+        </div>
+      </div>
+      <div class="bar"><span id="vt-hint"></span><span id="vt-lead"></span></div>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="sec" id="sec-tasks">
+      <div class="sec-head">
+        <div class="sec-title"><span class="step">04</span>Tasks</div>
+        <span class="eyebrow" id="tk-count"></span>
+      </div>
+      <div class="bar2"><i id="tk-bar" style="width:0%"></i></div>
+      <div class="card" style="border-top:none">
+        <div class="filters" id="tk-filters"></div>
+        <div id="tasks"></div>
+      </div>
+      <div class="card">
+        <button class="fold" id="task-add-fold">
+          <span><span class="fold-t">+ Add a task</span></span><span class="caret">▾</span>
+        </button>
+        <div class="hide" id="task-add" style="padding:12px;border-top:1px solid var(--rule)">
+          <label class="f"><span>What needs doing</span><input type="text" id="new-task" placeholder="Book the villa transfer" /></label>
+          <label class="f"><span>Detail, optional</span><input type="text" id="new-task-hint" placeholder="Deadline, context, who to call" /></label>
+          <button id="add-task">Add task</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 5 -->
+    <div class="sec" id="sec-flights">
+      <div class="sec-head"><div class="sec-title"><span class="step">05</span>Flight manifest</div></div>
+      <button class="fold" id="mf-fold">
+        <span><span class="fold-t">Flights</span> <span class="fold-s" id="mf-count"></span></span>
+        <span class="caret" id="mf-caret">▸</span>
+      </button>
+      <div class="hide" id="mf-body">
+        <div class="card" id="manifest" style="border-top:none"></div>
+        <div class="bar"><span>TAP ANY NAME TO FILL IT IN</span></div>
+      </div>
+    </div>
+
+    <div class="split"><span>Reference — not the plan</span></div>
+
+    <div class="sec" id="sec-recs">
+      <div class="sec-head">
+        <div class="sec-title">Recommendations</div>
+        <span class="eyebrow" id="rc-count"></span>
+      </div>
+      <p class="recintro">A shortlist to pick from, with ratings, drive times from the villa and rough costs.
+        Nothing here is booked. Tap any card to open it in Google Maps, or drop it straight into a day.</p>
+      <div class="chips" id="rc-cats"></div>
+      <div class="card">
+        <div id="rcmap"></div>
+        <div class="map-note"><span id="rc-note"></span><span id="rc-legend"></span></div>
+      </div>
+      <div class="card" id="recs"></div>
+
+      <div class="sec" style="margin-top:14px">
+        <button class="fold" id="ga-fold">
+          <span><span class="fold-t">Getting around</span> <span class="fold-s">Vans, Grab, traffic windows</span></span>
+          <span class="caret" id="ga-caret">▸</span>
+        </button>
+        <div class="card hide" id="ga-body" style="padding:14px;border-top:none">
+          <div class="eyebrow" style="margin-bottom:6px">Why vans, not Grab, for group moves</div>
+          <div class="rtext">Grab caps at 6 seats and drivers can refuse large-group pickups in tourist zones — Canggu and Berawa
+            have Grab-restricted areas near the beach clubs, so expect a 3–5 min walk to a pickup point. For anything with
+            all 15 together, pre-book two Hiace vans with a driver through the villa manager.</div>
+          <div class="rrow"><span class="rk">Airport pickup</span><span class="rv">2× Hiace (12–15 seats) held at arrivals · <b>IDR 350–500k per van, one way</b></span></div>
+          <div class="rrow"><span class="rk">Group activities</span><span class="rv">Half-day charter <b>700–900k/van</b> · full day <b>1.0–1.3m/van</b></span></div>
+          <div class="rrow"><span class="rk">Free &amp; easy</span><span class="rv">Split into 3–4 subgroups on Grab car/bike · <b>15–45k</b> per Canggu–Berawa hop</span></div>
+          <div class="rrow"><span class="rk">Whole trip</span><span class="rv">Budget <b>IDR 3–4.5m total</b> for vans across the 4 days ≈ 200–300k per person</span></div>
+          <div class="eyebrow" style="margin:12px 0 6px">Traffic windows to plan around</div>
+          <div class="rrow warn"><span class="rk">Thu 4–7pm</span><span class="rv">Worst window of the trip. Airport road into Kuta/Seminyak is jammed.
+            Budget <b>60–75 min</b> door to door, not the usual 35–40.</span></div>
+          <div class="rrow warn"><span class="rk">Fri &amp; Sat 5–7pm</span><span class="rv">Berawa and Batu Bolong beach roads crawl as the beach clubs empty out.
+            Either stay through dinner or leave by 4:30pm.</span></div>
+          <div class="rrow ok"><span class="rk">Sat/Sun before 9am</span><span class="rv">Clearest roads of the trip. Front-load anything time-sensitive —
+            pickleball 9am, church 10am.</span></div>
+        </div>
+      </div>
+
+      <div class="sec" style="margin-top:10px">
+        <button class="fold" id="cs-fold">
+          <span><span class="fold-t">What it costs</span> <span class="fold-s">Per person, rough</span></span>
+          <span class="caret" id="cs-caret">▸</span>
+        </button>
+        <div class="card hide" id="cs-body" style="padding:14px;border-top:none">
+          <div id="costs"></div>
+          <div class="rrow tot"><span class="rk">Per person</span><span class="rv"><b>~1.8m – 3.3m IDR</b> · roughly <b>S$150 – S$275</b></span></div>
+          <div class="rtext" style="margin-top:8px">Excludes beach club spend, flights and accommodation. Rate used: ~1 SGD ≈ 12,000 IDR — check before you pay.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bar">
+      <span id="sync-txt">Loading…</span>
+      <button class="ghost tiny" id="sync-now">Sync now</button>
+    </div>
+    <div class="foot">Shared board. Everyone with the link sees the same thing and can edit it. Refreshes every 15 seconds and whenever you switch back to this tab.</div>
+  </div>
+</div>
+
+<script>
+const API = "/api/board";
+const ROSTER = ["Amanda","Hansel","Cheryl","Sean","Matt","Di","Janelle","Chan","Darren","Amy","Ryan","Sherilyn","Jim","Jason","Kenny"];
+
+const DAYS = [
+  {id:"27",dow:"THU",n:1,title:"Arrival & first night"},
+  {id:"28",dow:"FRI",n:2,title:"Own thing, then Nuri's"},
+  {id:"29",dow:"SAT",n:3,title:"Pickleball & villa dinner"},
+  {id:"30",dow:"SUN",n:4,title:"Split day & departures"}
+];
+
+const TYPES = [
+  ["arrive","✈️","Arrive"],["depart","🛫","Depart"],["travel","🚗","Travel"],
+  ["food","🍜","Food"],["seafood","🦞","Seafood"],["drinks","🍹","Drinks"],
+  ["snack","🍡","Snack"],["activity","🏄","Activity"],["beach","🏖️","Beach"],
+  ["spa","💆","Spa"],["hotel","🏨","Villa"],["free","🕐","Free time"]
+];
+const TY = Object.fromEntries(TYPES.map(t=>[t[0],{e:t[1],l:t[2]}]));
+
+let S = {legs:{},votes:{},tasks:[],opts:[],sched:[],meta:{}};
+let me = localStorage.getItem("bali.me");
+let peek = localStorage.getItem("bali.peek")==="1";
+let openPax = null, openNotes = {}, openOwner = null, editOpt = null, editTask = null, editSched = null, editDayTitle = false, focusLoc = false, editBase = false;
+let day = localStorage.getItem("bali.day") || DAYS[0].id;
+if(!DAYS.some(d=>d.id===day)) day = DAYS[0].id;
+let tkFilter = localStorage.getItem("bali.tkf") || "open";
+let grpOnly = localStorage.getItem("bali.grp")==="1";
+let dragging = false;
+
+const $ = (id)=>document.getElementById(id);
+const esc = (s)=>String(s==null?"":s).replace(/[&<>"']/g,(c)=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const val = (id)=>{const e=$(id);return e?e.value:"";};
+const leg = (o,a,b)=>[o&&o[a],o&&o[b]].filter(Boolean).join(" ");
+const full = (n)=>{const o=S.legs[n]||{};return !!(leg(o,"arrFl","arrT")&&leg(o,"depFl","depT"));};
+const unlocked = ()=> !!me || peek;
+
+function showErr(m){const e=$("err");if(!m){e.className="err hide";return;}e.className="err";e.textContent=m;}
+
+async function pull(loud){
+  if(loud && $("sync-txt")) $("sync-txt").textContent="Syncing…";
+  try{
+    const r = await fetch(API,{cache:"no-store"});
+    if(r.status===503){
+      const b = await r.json().catch(()=>({}));
+      showErr("SETUP NEEDED · "+(b.message||"Storage not connected yet."));
+      $("sync-txt").textContent="Not connected";
+      render();
+      return;
+    }
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    S = await r.json();
+    showErr("");
+    $("sync-txt").textContent = "Synced "+new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
+    render();
+  }catch(e){
+    showErr("Can't reach the board. Check your connection, then hit Sync now.");
+    $("sync-txt").textContent="Offline";
+  }
+}
+
+async function send(op){
+  try{
+    const r = await fetch(API,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(op)});
+    if(r.status===503){
+      const b = await r.json().catch(()=>({}));
+      showErr("SETUP NEEDED · "+(b.message||"Storage not connected yet."));
+      return;
+    }
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    S = await r.json();
+    showErr("");
+    $("sync-txt").textContent = "Saved "+new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
+    render();
+  }catch(e){
+    showErr("That didn't save. Try again.");
+  }
+}
+
+/* ---- shared helpers ------------------------------------------------------- */
+
+const dayRows = (d)=>(S.sched||[]).filter(r=>r.day===d);
+const shownRows = (d)=>{const r=dayRows(d);return grpOnly?r.filter(x=>x.everyone):r;};
+const withPin = (rows)=>rows.filter(r=>r.lat!=null && r.lng!=null);
+const dayOpts = (d)=>(S.opts||[]).filter(o=>o.day===d);
+const anyOpts = ()=>(S.opts||[]).filter(o=>!o.day);
+const dayInfo = (d)=>DAYS.find(x=>x.id===d)||DAYS[0];
+const dayTitle = (d)=>((S.meta||{})["dt"+d]||"").trim() || dayInfo(d).title;
+const dirLink = (r)=> r.url || ("https://www.google.com/maps/search/?api=1&query="+r.lat+","+r.lng);
+const locLabel = (r)=> /^https?:\/\//i.test(r.loc) ? "Map link" : r.loc;
+const myTasks = ()=>(S.tasks||[]).filter(t=>me&&(t.owners||[]).indexOf(me)>-1&&!t.done);
+const freeTasks = ()=>(S.tasks||[]).filter(t=>!(t.owners||[]).length&&!t.done);
+const unvoted = ()=>{
+  if(!me) return [];
+  return (S.opts||[]).filter(o=>(S.votes[o.id]||[]).indexOf(me)<0);
+};
+
+function needName(){
+  if(me) return false;
+  alert("Pick your name at the top first — that's how votes and tasks get attributed.");
+  return true;
+}
+
+// One reorder engine, used by both the itinerary and the task list.
+function makeDrag(wrapSel, gripSel, onDrop){
+  return function(container){
+    container.querySelectorAll(gripSel).forEach(grip=>{
+      grip.addEventListener("pointerdown",(e)=>{
+        const row = grip.closest(wrapSel);
+        if(!row || e.button>0) return;
+        e.preventDefault();
+        const list = [...container.querySelectorAll(wrapSel)];
+        const from = list.indexOf(row);
+        const rects = list.map(el=>el.getBoundingClientRect());
+        const startY = e.clientY;
+        let to = from;
+        dragging = true;
+        row.classList.add("dragging");
+        try{ grip.setPointerCapture(e.pointerId); }catch(err){}
+
+        const mark = ()=>{
+          list.forEach(el=>el.classList.remove("dropat","dropend"));
+          if(to===from) return;
+          if(to>=list.length-1 && to>from) list[list.length-1].classList.add("dropend");
+          else list[to>from?to:to].classList.add(to>from?"dropend":"dropat");
+        };
+        const move = (ev)=>{
+          const y = ev.clientY;
+          row.style.transform = "translateY("+(y-startY)+"px)";
+          let idx = 0;
+          for(let i=0;i<rects.length;i++){
+            const mid = rects[i].top + rects[i].height/2;
+            if(y > mid) idx = i;
+          }
+          if(idx!==to){ to = idx; mark(); }
+        };
+        const end = ()=>{
+          document.removeEventListener("pointermove",move);
+          document.removeEventListener("pointerup",end);
+          document.removeEventListener("pointercancel",end);
+          row.style.transform = "";
+          list.forEach(el=>el.classList.remove("dragging","dropat","dropend"));
+          dragging = false;
+          if(to!==from) onDrop(row.dataset.id, to);
+          else render();
+        };
+        document.addEventListener("pointermove",move);
+        document.addEventListener("pointerup",end);
+        document.addEventListener("pointercancel",end);
+      });
+    });
+  };
+}
+const attachSchedDrag = makeDrag(".trowwrap",".numgrip",(id,to)=>send({op:"reorderSched",id:id,toIndex:to}));
+const attachTaskDrag  = makeDrag(".taskwrap",".taskgrip",(id,to)=>send({op:"reorderTask",id:id,toIndex:to}));
+
+/* ---- step 1: who are you -------------------------------------------------- */
+
+function renderWho(){
+  const el = $("sec-who");
+  if(!unlocked()){
+    el.innerHTML = '<div class="card gate"><div class="eyebrow"><span class="step">01</span>Start here</div>'+
+      '<h2>Who are you?</h2>'+
+      '<p>Tap your name. Everything else unlocks, and your votes and tasks get your name on them.</p>'+
+      '<div class="chips">'+ROSTER.map(n=>'<button class="chip" data-n="'+esc(n)+'">'+esc(n)+'</button>').join("")+'</div>'+
+      '<div class="locked"><div class="eyebrow">What\'s inside</div><ul>'+
+        '<li>Day-by-day itinerary with a map</li>'+
+        '<li>Ideas to vote on for each day</li>'+
+        '<li>The task list, and what still needs an owner</li>'+
+        '<li>Everyone\'s flight times</li>'+
+      '</ul><button class="peek" id="peek">Not on the list — just let me look</button></div></div>';
+    el.querySelectorAll(".chip").forEach(b=>b.onclick=()=>{
+      me=b.dataset.n; localStorage.setItem("bali.me",me);
+      localStorage.removeItem("bali.peek"); peek=false;
+      render();
+    });
+    $("peek").onclick=()=>{peek=true;localStorage.setItem("bali.peek","1");render();};
+    $("board").className = "hide";
+    $("nav").className = "nav hide";
+    return;
+  }
+
+  $("board").className = "";
+  $("nav").className = "nav";
+
+  const mine = myTasks().length, free = freeTasks().length, nv = unvoted().length;
+  const flights = me ? full(me) : true;
+  let h = '<div class="card"><div class="you">'+
+    '<span class="you-nm">'+(me?esc(me.toUpperCase()):"JUST LOOKING")+'</span>'+
+    '<button class="ghost tiny" id="notme" style="margin-left:auto">'+(me?"Not you?":"Pick your name")+'</button></div>';
+  const n = [];
+  if(me && !flights) n.push(['flights','act','Add your flight times']);
+  if(me && nv) n.push(['vote','act',nv+' idea'+(nv>1?'s':'')+' you haven\'t voted on']);
+  if(mine) n.push(['tasks','','You\'re on '+mine+' task'+(mine>1?'s':'')]);
+  if(free) n.push(['tasks','act',free+' task'+(free>1?'s':'')+' with nobody on '+(free>1?'them':'it')]);
+  if(me && flights && !nv && !free) n.push(['itin','ok','You\'re all caught up']);
+  if(!me) n.push(['who','act','Pick your name to vote or claim tasks']);
+  h += '<div class="nudges">'+n.map(x=>'<button class="nudge '+x[1]+'" data-go="'+x[0]+'">'+esc(x[2])+' →</button>').join("")+'</div></div>';
+  el.innerHTML = h;
+
+  $("notme").onclick=()=>{
+    me=null;localStorage.removeItem("bali.me");
+    peek=false;localStorage.removeItem("bali.peek");
+    render();window.scrollTo({top:0});
+  };
+  el.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{
+    const t = b.dataset.go;
+    if(t==="who"){ $("notme").click(); return; }
+    if(t==="flights"){ setFold("mf",true); }
+    const target = $("sec-"+(t==="itin"?"itin":t));
+    if(target) target.scrollIntoView({block:"start"});
+  });
+}
+
+function renderNav(){
+  if(!unlocked()) return;
+  const rows = dayRows(day).length;
+  const nv = unvoted().length;
+  const open = (S.tasks||[]).filter(t=>!t.done).length;
+  const f = ROSTER.filter(full).length;
+  const items = [
+    ["itin","Itinerary",rows,false],
+    ["vote","Do &amp; vote",nv,nv===0],
+    ["tasks","Tasks",open,open===0],
+    ["flights","Flights",15-f,f===15],
+    ["recs","Recs",0,false]
+  ];
+  $("nav-in").innerHTML = items.map(i=>
+    '<button class="jump'+(i[3]?" done":"")+'" data-j="'+i[0]+'">'+i[1]+(i[2]?'<b>'+i[2]+'</b>':(i[3]?'<b>✓</b>':''))+'</button>'
+  ).join("");
+  $("nav-in").querySelectorAll("[data-j]").forEach(b=>b.onclick=()=>{
+    if(b.dataset.j==="flights") setFold("mf",true);
+    const t = $("sec-"+b.dataset.j);
+    if(t) t.scrollIntoView({block:"start"});
+  });
+}
+
+/* ---- collapsibles --------------------------------------------------------- */
+
+function foldOpen(k){ return localStorage.getItem("bali.fold."+k)==="1"; }
+function setFold(k,on){
+  localStorage.setItem("bali.fold."+k, on?"1":"0");
+  applyFold(k);
+}
+function applyFold(k){
+  const body = $(k+"-body"), caret = $(k+"-caret");
+  if(!body) return;
+  const on = foldOpen(k);
+  body.className = body.className.replace(/\bhide\b/g,"").trim() + (on?"":" hide");
+  if(caret) caret.textContent = on?"▾":"▸";
+}
+function wireFold(k){
+  const btn = $(k+"-fold");
+  if(btn) btn.onclick = ()=>setFold(k,!foldOpen(k));
+  applyFold(k);
+}
+// simple inline show/hide for the three "add" forms
+function wireAdd(k){
+  const btn = $(k+"-fold"), body = $(k);
+  if(!btn||!body) return;
+  btn.onclick = ()=>{
+    const on = body.className.indexOf("hide")>-1;
+    body.className = on ? "" : "hide";
+    body.style.padding = "12px";
+    btn.querySelector(".caret").textContent = on?"▴":"▾";
+    if(on) (body.querySelector("input,select")||{focus(){}}).focus();
+  };
+}
+
+/* ---- itinerary + map ------------------------------------------------------ */
+
+const BALI = [-8.65, 115.19];
+let map = null, pins = [], basePin = null, lastPinSig = "";
+const based = ()=>{const b=S.base;return b && b.lat!=null && b.lng!=null ? b : null;};
+
+let remeasureT = null;
+function remeasure(){
+  if(!map) return;
+  clearTimeout(remeasureT);
+  remeasureT = setTimeout(()=>{
+    try{ map.invalidateSize(); lastPinSig=""; syncMap(); }catch(e){}
+  },150);
+}
+
+function initMap(){
+  if(map || !window.L || !$("map")) return;
+  try{
+    map = L.map("map",{scrollWheelZoom:false}).setView(BALI,10);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
+      maxZoom:19,
+      attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(map);
+    if(window.ResizeObserver) new ResizeObserver(remeasure).observe($("map"));
+    setTimeout(remeasure,300);
+    setTimeout(remeasure,1500);
+  }catch(e){ map = null; }
+}
+
+function syncMap(){
+  if(!unlocked()) return;
+  const note = $("map-note");
+  if(!window.L){
+    $("map").innerHTML = '<div class="map-off">Map didn\'t load — you\'re probably offline, or the tab needs a refresh. The itinerary below still works.</div>';
+    note.textContent = "";
+    return;
+  }
+  initMap();
+  if(!map) return;
+
+  // Numbers match the table: every row in the day is numbered, and the ones
+  // with a location carry that same number onto the map.
+  const all = shownRows(day);
+  const numbered = all.map((r,i)=>({...r,no:i+1}));
+  const rows = withPin(numbered);
+  const missing = all.filter(r=>!r.loc).length;
+  note.textContent = (rows.length ? rows.length+" OF "+all.length+" ON THE MAP" : "NOTHING PINNED THIS DAY YET")
+    + (missing ? " · "+missing+" NEED"+(missing===1?"S":"")+" A LOCATION" : "");
+  $("map-legend").textContent = (rows.some(r=>r.everyone) ? "● EVERYONE  ○ OPTIONAL" : "") +
+    (based() ? "  🏠 BASE" : "");
+
+  const b = based();
+  const sig = day+"|"+grpOnly+"|"+(b?b.lat+","+b.lng+b.label:"nobase")+"|"+
+    rows.map(r=>r.id+r.no+r.lat+r.lng+r.everyone+r.activity).join(",");
+  if(sig===lastPinSig) return;
+  lastPinSig = sig;
+
+  pins.forEach(m=>{ try{ map.removeLayer(m); }catch(e){} });
+  pins = [];
+  if(basePin){ try{ map.removeLayer(basePin); }catch(e){} basePin = null; }
+
+  // The base sits on every day's map, so a day's stops always read against
+  // where everyone is sleeping.
+  if(b){
+    basePin = L.marker([b.lat,b.lng],{
+      icon: L.divIcon({className:"",html:'<div class="mbase"><i>🏠</i></div>',
+                       iconSize:[30,30],iconAnchor:[15,30],popupAnchor:[0,-28]}),
+      zIndexOffset: -500
+    }).addTo(map);
+    basePin.bindPopup(
+      '<div class="pin-t">Base</div><div class="pin-a">'+esc(b.label)+'</div>'+
+      (b.loc?'<div class="pin-l">'+esc(b.loc)+'</div>':'')+
+      '<div style="margin-top:6px"><a href="'+esc(b.url||("https://www.google.com/maps/search/?api=1&query="+b.lat+","+b.lng))+
+      '" target="_blank" rel="noopener">Directions →</a></div>'
+    );
+  }
+  rows.forEach(r=>{
+    const icon = L.divIcon({
+      className:"",
+      html:'<div class="mpin'+(r.everyone?" grp":"")+'"><i>'+r.no+'</i></div>',
+      iconSize:[26,26], iconAnchor:[13,26], popupAnchor:[0,-24]
+    });
+    const m = L.marker([r.lat,r.lng],{icon:icon}).addTo(map);
+    m.bindPopup(
+      '<div class="pin-t">'+r.no+(r.time?" · "+esc(r.time):"")+(r.everyone?" · EVERYONE":"")+'</div>'+
+      '<div class="pin-a">'+esc(r.activity)+'</div>'+
+      (r.loc?'<div class="pin-l">'+esc(locLabel(r))+'</div>':'')+
+      '<div style="margin-top:6px"><a href="'+esc(dirLink(r))+'" target="_blank" rel="noopener">Directions →</a></div>'
+    );
+    pins.push(m);
+  });
+
+  // Frame the day's stops together with the base, so the distance between
+  // "where we sleep" and "where we're going" is the thing you actually see.
+  const frame = rows.map(r=>[r.lat,r.lng]);
+  if(b) frame.push([b.lat,b.lng]);
+  if(frame.length>1) map.fitBounds(L.latLngBounds(frame),{padding:[40,40],maxZoom:14});
+  else if(frame.length===1) map.setView(frame[0],14);
+  else map.setView(BALI,10);
+  setTimeout(()=>{ try{ map.invalidateSize(); }catch(e){} },0);
+}
+
+function renderBase(){
+  const el = $("basebar");
+  if(!el) return;
+  const b = S.base||{};
+  if(editBase){
+    el.innerHTML = '<div style="width:100%">'+
+      '<div class="grid2">'+
+        '<label class="f"><span>Call it</span><input type="text" id="eb-label" value="'+esc(b.label||"Villa")+'" placeholder="Villa" /></label>'+
+        '<label class="f"><span>&nbsp;</span><div class="btnrow"><button class="tiny" id="eb-save">Save</button>'+
+        '<button class="ghost tiny" id="eb-cancel">Cancel</button></div></label>'+
+      '</div>'+
+      '<label class="f" style="margin:0"><span>Where you\'re staying — paste the Maps link for the exact gate</span>'+
+      '<input type="text" id="eb-loc" value="'+esc(b.loc||"")+'" placeholder="Google Maps link, or the address" /></label></div>';
+    $("eb-cancel").onclick=()=>{editBase=false;render();};
+    $("eb-save").onclick=()=>{
+      const loc=val("eb-loc"), label=val("eb-label");
+      const changed = (b.loc||"") !== loc;
+      editBase=false;
+      if(changed && loc) $("sync-txt").textContent = "Finding that place…";
+      send({op:"setBase",loc:loc,label:label});
+    };
+    return;
+  }
+  const link = b.url || (b.lat!=null ? "https://www.google.com/maps/search/?api=1&query="+b.lat+","+b.lng : "");
+  el.innerHTML = '<span class="bl">🏠 Base</span>'+
+    '<span class="bv">'+(b.loc
+      ? (link?'<a href="'+esc(link)+'" target="_blank" rel="noopener">':'')+esc(b.label||"Villa")+' — '+
+        esc(/^https?:\/\//i.test(b.loc)?"Maps link":b.loc)+(link?'</a>':'')+
+        (b.lat==null?' <span class="none">NOT ON MAP</span>':'')
+      : '<span class="none">NO BASE SET</span>')+'</span>'+
+    '<button class="tag" id="eb-edit">Edit</button>';
+  $("eb-edit").onclick=()=>{editBase=true;render();};
+}
+
+function renderTabs(id){
+  const el = $(id);
+  if(!el) return;
+  el.innerHTML = DAYS.map(d=>{
+    const rows = dayRows(d.id);
+    const g = rows.filter(r=>r.everyone).length;
+    return '<button class="daytab'+(d.id===day?" on":"")+'" data-d="'+d.id+'">'+
+      '<b>'+d.id+'</b><span>'+d.dow+'</span>'+
+      '<span class="pins">'+(rows.length? rows.length+(g?" · "+g+" GRP":" ITEMS") : "EMPTY")+'</span></button>';
+  }).join("");
+  el.querySelectorAll("[data-d]").forEach(b=>b.onclick=()=>{
+    day = b.dataset.d;
+    localStorage.setItem("bali.day",day);
+    editSched = null; editDayTitle = false;
+    render();
+  });
+}
+
+function renderDayHead(){
+  const el = $("dayhead");
+  const d = dayInfo(day);
+  const rows = dayRows(day);
+  const g = rows.filter(r=>r.everyone).length;
+  if(editDayTitle){
+    el.innerHTML = '<div style="padding:12px;width:100%">'+
+      '<label class="f"><span>Day '+d.n+' title</span><input type="text" id="dt-in" value="'+esc(dayTitle(day))+'" /></label>'+
+      '<div class="btnrow"><button class="tiny" id="dt-save">Save</button>'+
+      '<button class="ghost tiny" id="dt-cancel">Cancel</button></div></div>';
+    $("dt-cancel").onclick=()=>{editDayTitle=false;render();};
+    $("dt-save").onclick=()=>{const v=val("dt-in");editDayTitle=false;send({op:"setMeta",key:"dt"+day,value:v});};
+    return;
+  }
+  el.innerHTML = '<div><h3>Day '+d.n+' — '+esc(dayTitle(day))+'</h3>'+
+    '<div class="sub">'+d.dow+' '+d.id+' Aug · '+rows.length+' item'+(rows.length===1?'':'s')+
+    (g?' · '+g+' for everyone':'')+'</div></div>'+
+    '<div class="btnrow">'+
+      (g?'<button class="tag'+(grpOnly?" own":"")+'" id="grp-only">'+(grpOnly?"Showing group only":"Group only")+'</button>':'')+
+      '<button class="tag" id="dt-edit">Rename day</button></div>';
+  $("dt-edit").onclick=()=>{editDayTitle=true;render();};
+  if($("grp-only")) $("grp-only").onclick=()=>{
+    grpOnly=!grpOnly;localStorage.setItem("bali.grp",grpOnly?"1":"0");render();
+  };
+}
+
+function typeSelect(id,cur){
+  return '<select id="'+id+'">'+TYPES.map(t=>
+    '<option value="'+t[0]+'"'+(cur===t[0]?" selected":"")+'>'+t[1]+' '+t[2]+'</option>').join("")+'</select>';
+}
+function daySelect(id,cur,anyLabel){
+  return '<select id="'+id+'">'+
+    (anyLabel?'<option value=""'+(!cur?" selected":"")+'>'+anyLabel+'</option>':'')+
+    DAYS.map(d=>'<option value="'+d.id+'"'+(cur===d.id?" selected":"")+'>Day '+d.n+' · '+d.dow+' '+d.id+'</option>').join("")+
+    '</select>';
+}
+
+function schedForm(r){
+  return '<div class="pick" style="padding-left:12px">'+
+    '<label class="f"><span>What\'s happening</span><input type="text" id="es-act" value="'+esc(r.activity||"")+'" /></label>'+
+    '<div class="grid2">'+
+      '<label class="f"><span>Time</span><input type="text" id="es-time" value="'+esc(r.time||"")+'" placeholder="6:00 PM" /></label>'+
+      '<label class="f"><span>How long</span><input type="text" id="es-dur" value="'+esc(r.dur||"")+'" placeholder="2h" /></label>'+
+    '</div>'+
+    '<div class="grid2">'+
+      '<label class="f"><span>Type</span>'+typeSelect("es-type",r.type)+'</label>'+
+      '<label class="f"><span>Approx cost</span><input type="text" id="es-cost" value="'+esc(r.cost||"")+'" placeholder="250k pp" /></label>'+
+    '</div>'+
+    '<label class="f"><span>Location — Maps link or place name</span>'+
+      '<input type="text" id="es-loc" value="'+esc(r.loc||"")+'" placeholder="Naughty Nuri\'s Ubud" /></label>'+
+    '<label class="f"><span>Notes</span><input type="text" id="es-note" value="'+esc(r.note||"")+'" /></label>'+
+    '<label class="check"><input type="checkbox" id="es-everyone"'+(r.everyone?" checked":"")+' /> This one\'s for everyone</label>'+
+    '<label class="f"><span>Move to day</span>'+daySelect("es-day",r.day,"")+'</label>'+
+    '<div class="btnrow"><button class="tiny" id="es-save">Save</button>'+
+    '<button class="ghost tiny" id="es-cancel">Cancel</button></div></div>';
+}
+
+function renderSched(){
+  renderTabs("daytabs");
+  renderDayHead();
+  renderBase();
+  const el = $("sched");
+  const rows = shownRows(day);
+  const d = dayInfo(day);
+
+  el.innerHTML = '<div class="thead"><span>#</span><span>Time</span><span>Type</span><span>Activity</span><span>Notes</span><span>Cost</span></div>'+
+    (rows.length ? rows.map((r,i)=>{
+      const t = TY[r.type]||TY.activity;
+      // No location is the common case early on, and an empty cell reads as
+      // broken rather than "nobody has decided yet". Say so, and make it a tap.
+      let loc;
+      if(!r.loc){
+        loc = '<span class="loc"><button class="addloc" data-addloc="'+r.id+'">+ Add location</button></span>';
+      }else if(r.lat!=null){
+        loc = '<span class="loc"><a href="'+esc(dirLink(r))+'" target="_blank" rel="noopener">'+esc(locLabel(r))+'</a></span>';
+      }else{
+        loc = '<span class="loc">'+esc(locLabel(r))+' <span class="unpinned">COULDN\'T FIND IT — TRY A MAPS LINK</span></span>';
+      }
+      let h = '<div class="trowwrap" data-id="'+r.id+'"><div class="trow'+(r.everyone?" grp":"")+'">'+
+        '<div class="c-no"><button class="numgrip" title="Drag to reorder" aria-label="Reorder item '+(i+1)+'">'+(i+1)+'</button></div>'+
+        '<div class="c-time">'+esc(r.time||"—")+(r.dur?'<i>'+esc(r.dur)+'</i>':'')+'</div>'+
+        '<div class="c-type"><span class="ty ty-'+r.type+'">'+t.e+' '+t.l+'</span>'+
+          (r.everyone?'<span class="grpchip">Everyone</span>':'')+'</div>'+
+        '<div class="c-act">'+esc(r.activity)+loc+'</div>'+
+        '<div class="c-note">'+esc(r.note||"")+'</div>'+
+        '<div class="c-cost">'+esc(r.cost||"")+'</div>'+
+        '<div class="rowtools">'+
+          '<button class="tag'+(r.everyone?" own":"")+'" data-grp="'+r.id+'">'+(r.everyone?"✓ Everyone":"Mark everyone")+'</button>'+
+          '<button class="tag" data-edsc="'+r.id+'">Edit</button>'+
+          '<button class="tag" data-delsc="'+r.id+'">Delete</button>'+
+        '</div></div>';
+      if(editSched===r.id) h += schedForm(r);
+      return h+'</div>';
+    }).join("") : '<div class="emptyday">'+(grpOnly?"NO GROUP ITEMS ON ":"NOTHING ON ")+d.dow+' '+d.id+' YET</div>');
+
+  attachSchedDrag(el);
+  el.querySelectorAll("[data-addloc]").forEach(b=>b.onclick=()=>{
+    editSched = b.dataset.addloc; focusLoc = true; render();
+  });
+  el.querySelectorAll("[data-grp]").forEach(b=>b.onclick=()=>send({op:"toggleEveryone",id:b.dataset.grp}));
+  el.querySelectorAll("[data-edsc]").forEach(b=>b.onclick=()=>{
+    editSched = editSched===b.dataset.edsc ? null : b.dataset.edsc; render();
+  });
+  el.querySelectorAll("[data-delsc]").forEach(b=>b.onclick=()=>{
+    const r = rows.find(x=>x.id===b.dataset.delsc);
+    if(confirm('Remove "'+(r?r.activity:"this")+'" from the itinerary for everyone? This can\'t be undone.'))
+      send({op:"deleteSched",id:b.dataset.delsc});
+  });
+  if(editSched && $("es-save")){
+    if(focusLoc){ focusLoc=false; $("es-loc").focus(); $("es-loc").scrollIntoView({block:"center"}); }
+    $("es-cancel").onclick=()=>{editSched=null;render();};
+    $("es-save").onclick=()=>{
+      const r = rows.find(x=>x.id===editSched);
+      const act = val("es-act");
+      if(!r || !act.trim()) return;
+      const loc = val("es-loc");
+      const changed = r.loc !== loc;
+      editSched = null;
+      if(changed && loc) $("sync-txt").textContent = "Finding that place…";
+      send({op:"editSched",id:r.id,activity:act,time:val("es-time"),dur:val("es-dur"),
+            type:val("es-type"),everyone:$("es-everyone").checked,
+            loc:loc,cost:val("es-cost"),note:val("es-note"),day:val("es-day")});
+    };
+  }
+
+  const tot=(S.sched||[]).length, mapped=withPin(S.sched||[]).length;
+  $("sc-count").textContent = mapped+"/"+tot+" MAPPED";
+  $("sc-hint").textContent = "DRAG THE NUMBER TO REORDER";
+}
+
+/* ---- things to do & vote -------------------------------------------------- */
+
+function renderVotes(){
+  renderTabs("daytabs2");
+  const el = $("votes");
+  const d = dayInfo(day);
+  const groups = [
+    [d.dow+" "+d.id+" · Day "+d.n, dayOpts(day)],
+    ["Any time", anyOpts()]
+  ].filter(g=>g[1].length);
+
+  const counts = (S.opts||[]).map(o=>(S.votes[o.id]||[]).length);
+  const max = Math.max(1,...counts);
+  const voters = new Set();
+  Object.values(S.votes||{}).forEach(l=>(l||[]).forEach(n=>voters.add(n)));
+
+  const card = (o)=>{
+    const list = S.votes[o.id]||[];
+    const mine = me && list.indexOf(me)>-1;
+    let h = '<div class="optwrap"><div class="opt'+(mine?" mine":"")+'" data-o="'+esc(o.id)+'" role="button" tabindex="0">'+
+      '<div class="opt-bar" style="width:'+((list.length/max)*100)+'%"></div>'+
+      '<div class="opt-in"><div><div class="opt-l">'+esc(o.label)+'</div>'+
+      (o.when?'<div class="opt-a">'+esc(o.when)+'</div>':'')+
+      (o.note?'<div class="opt-n">'+esc(o.note)+'</div>':'')+
+      (list.length?'<div class="voters">'+esc(list.join(", "))+'</div>':'')+
+      '<div class="task-meta">'+
+      (o.loc?'<a class="tag" href="'+esc(o.url||(o.lat!=null
+          ? "https://www.google.com/maps/search/?api=1&query="+o.lat+","+o.lng
+          : "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(o.loc)))+
+        '" target="_blank" rel="noopener" data-stop="1">Open in Maps</a>':'')+
+      (list.length?'<button class="tag go" data-plan="'+esc(o.id)+'">→ Put on '+dayInfo(o.day||day).dow+'</button>':'')+
+      '<button class="tag" data-editopt="'+esc(o.id)+'">Edit</button>'+
+      '<button class="tag" data-delopt="'+esc(o.id)+'">Delete</button></div>'+
+      '</div><div class="opt-c">'+(list.length||"")+'</div></div></div>';
+    if(editOpt===o.id){
+      h += '<div class="pick" style="padding-left:12px">'+
+        '<label class="f"><span>Idea</span><input type="text" id="eo-label" value="'+esc(o.label)+'" /></label>'+
+        '<div class="grid2"><label class="f"><span>Which day</span>'+daySelect("eo-day",o.day,"Any time")+'</label>'+
+        '<label class="f"><span>Rough time</span><input type="text" id="eo-when" value="'+esc(o.when||"")+'" placeholder="8–3" /></label></div>'+
+        '<label class="f"><span>Detail</span><input type="text" id="eo-note" value="'+esc(o.note||"")+'" /></label>'+
+        '<div class="btnrow"><button class="tiny" id="eo-save">Save</button>'+
+        '<button class="ghost tiny" id="eo-cancel">Cancel</button></div></div>';
+    }
+    return h+'</div>';
+  };
+
+  el.innerHTML = groups.length
+    ? groups.map(g=>'<div class="subhead">'+esc(g[0])+' · '+g[1].length+'</div>'+g[1].map(card).join("")).join("")
+    : '<div class="emptyday">NO IDEAS FOR '+d.dow+' '+d.id+' YET — ADD ONE BELOW</div>';
+
+  el.querySelectorAll(".opt").forEach(dv=>{
+    const go=(e)=>{
+      // the row is the vote target, so the links and buttons inside it mustn't
+      // cast a vote on their way through
+      if(e && e.target.closest("[data-stop],[data-plan],[data-editopt],[data-delopt]")) return;
+      if(needName()) return;
+      send({op:"toggleVote",opt:dv.dataset.o,who:me});
+    };
+    dv.onclick=go;
+    dv.onkeydown=(e)=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go();}};
+  });
+  // graduate a well-voted idea onto the itinerary
+  el.querySelectorAll("[data-plan]").forEach(b=>b.onclick=(e)=>{
+    e.stopPropagation();
+    const o = (S.opts||[]).find(x=>x.id===b.dataset.plan);
+    if(!o) return;
+    const votes = S.votes[o.id]||[];
+    send({op:"addSched",day:o.day||day,activity:o.label,type:"activity",
+          loc:o.loc||"",lat:o.lat,lng:o.lng,url:o.url,
+          note:(votes.length?votes.length+" in: "+votes.join(", "):"")+(o.note?" · "+o.note:""),by:me});
+    $("sec-itin").scrollIntoView({block:"start"});
+  });
+  el.querySelectorAll("[data-editopt]").forEach(b=>b.onclick=(e)=>{
+    e.stopPropagation();
+    editOpt = editOpt===b.dataset.editopt ? null : b.dataset.editopt; render();
+  });
+  el.querySelectorAll("[data-delopt]").forEach(b=>b.onclick=(e)=>{
+    e.stopPropagation();
+    const o = (S.opts||[]).find(x=>x.id===b.dataset.delopt);
+    const v = (S.votes[b.dataset.delopt]||[]).length;
+    if(confirm('Delete "'+(o?o.label:"this idea")+'" for everyone?'+(v?" It has "+v+" vote"+(v>1?"s":"")+".":"")+" This can't be undone."))
+      send({op:"deleteOpt",id:b.dataset.delopt});
+  });
+  if(editOpt && $("eo-save")){
+    $("eo-cancel").onclick=()=>{editOpt=null;render();};
+    $("eo-save").onclick=()=>{
+      const id=editOpt, l=val("eo-label");
+      if(!l.trim()) return;
+      editOpt=null;
+      send({op:"editOpt",id:id,label:l,day:val("eo-day"),when:val("eo-when"),note:val("eo-note")});
+    };
+  }
+
+  // Default the new-idea day to whichever day you're looking at, but don't
+  // yank it out from under someone who has the form open and picked one.
+  if($("new-opt-day") && $("opt-add").className.indexOf("hide")>-1) $("new-opt-day").value = day;
+
+  const nv = unvoted().length;
+  $("vt-count").textContent = voters.size+"/15 VOTED";
+  $("vt-hint").textContent = me ? (nv? nv+" LEFT FOR YOU TO VOTE ON" : "YOU'VE VOTED ON EVERYTHING") : "PICK YOUR NAME TO VOTE";
+  const top = (S.opts||[]).map(o=>[o,(S.votes[o.id]||[]).length]).sort((x,y)=>y[1]-x[1])[0];
+  $("vt-lead").textContent = top && top[1]>0 ? "LEADING: "+top[0].label.toUpperCase() : "";
+}
+
+/* ---- tasks ---------------------------------------------------------------- */
+
+function ago(ts){
+  const s = Math.floor((Date.now()-ts)/1000);
+  if(s<60) return "just now";
+  if(s<3600) return Math.floor(s/60)+"m ago";
+  if(s<86400) return Math.floor(s/3600)+"h ago";
+  return Math.floor(s/86400)+"d ago";
+}
+
+const TKF = [
+  ["open","To do"],["mine","Mine"],["free","Needs someone"],["done","Done"],["all","All"]
+];
+function taskFilter(list){
+  if(tkFilter==="open") return list.filter(t=>!t.done);
+  if(tkFilter==="mine") return list.filter(t=>me&&(t.owners||[]).indexOf(me)>-1);
+  if(tkFilter==="free") return list.filter(t=>!(t.owners||[]).length&&!t.done);
+  if(tkFilter==="done") return list.filter(t=>t.done);
+  return list;
+}
+
+function renderTasks(){
+  const all = S.tasks||[];
+  const tasks = taskFilter(all);
+  const done = all.filter(t=>t.done).length;
+
+  $("tk-filters").innerHTML = TKF.map(f=>{
+    let n = f[0]==="open" ? all.filter(t=>!t.done).length
+          : f[0]==="mine" ? myTasks().length
+          : f[0]==="free" ? freeTasks().length
+          : f[0]==="done" ? done : all.length;
+    return '<button class="fl'+(tkFilter===f[0]?" on":"")+'" data-f="'+f[0]+'">'+f[1]+' '+n+'</button>';
+  }).join("");
+  $("tk-filters").querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>{
+    tkFilter=b.dataset.f;localStorage.setItem("bali.tkf",tkFilter);render();
+  });
+
+  const el = $("tasks");
+  el.innerHTML = tasks.length ? tasks.map(t=>{
+    const notes = t.notes||[], owners = t.owners||[];
+    const open = !!openNotes[t.id];
+    const isMine = me && owners.indexOf(me)>-1;
+    let h = '<div class="taskwrap" data-id="'+t.id+'"><div class="task'+(t.done?" done":"")+'"><div class="task-top">'+
+      (tkFilter==="all"||tkFilter==="open" ? '<button class="taskgrip" title="Drag to reorder" aria-label="Reorder task">⣿</button>' : '')+
+      '<button class="box'+(t.done?" on":"")+'" data-tog="'+t.id+'" aria-label="Mark done">'+(t.done?"✓":"")+'</button>'+
+      '<div style="flex:1"><div class="task-l">'+esc(t.label)+'</div>'+
+      (t.hint?'<div class="task-h">'+esc(t.hint)+'</div>':'')+
+      '<div class="task-meta">'+
+      (me && !isMine ? '<button class="tag go" data-claim="'+t.id+'">+ I\'ll do it</button>' : '')+
+      '<button class="tag'+(owners.length?" own":"")+'" data-own="'+t.id+'">'+esc(owners.length?owners.join(", "):"Nobody yet")+'</button>'+
+      '<button class="tag'+(notes.length?" hot":"")+'" data-notes="'+t.id+'">'+(notes.length?notes.length+" note"+(notes.length>1?"s":""):"Add note")+'</button>'+
+      '<button class="tag" data-edittask="'+t.id+'">Edit</button>'+
+      '<button class="tag" data-del="'+t.id+'">Delete</button>'+
+      '</div></div></div>';
+    if(editTask===t.id){
+      h += '<div class="pick" style="padding-left:12px">'+
+        '<label class="f"><span>Task</span><input type="text" id="et-label" value="'+esc(t.label)+'" /></label>'+
+        '<label class="f"><span>Detail, optional</span><input type="text" id="et-hint" value="'+esc(t.hint||"")+'" /></label>'+
+        '<div class="btnrow"><button class="tiny" id="et-save">Save</button>'+
+        '<button class="ghost tiny" id="et-cancel">Cancel</button></div></div>';
+    }
+    if(openOwner===t.id){
+      h += '<div class="pick"><div class="eyebrow">Who\'s doing this? Tap to add or remove — more than one is fine.</div><div class="chips">'+
+        ROSTER.map(n=>'<button class="chip'+(owners.indexOf(n)>-1?" on":"")+'" data-set="'+t.id+'|'+esc(n)+'">'+esc(n)+'</button>').join("")+
+        '</div><div class="btnrow" style="margin-top:8px"><button class="tiny" data-owndone="1">Done</button>'+
+        '<button class="ghost tiny" data-clearown="'+t.id+'">Nobody</button></div></div>';
+    }
+    if(open){
+      h += '<div class="notes">'+
+        (notes.length ? notes.map(n=>'<div class="note"><div class="note-h"><span>'+esc(n.by)+'</span><span>'+esc(ago(n.at))+'</span>'+
+          '<button class="note-x" data-dn="'+t.id+'|'+n.id+'">✕</button></div>'+
+          '<div class="note-b">'+esc(n.text)+'</div></div>').join("")
+          : '<div class="nonotes">NO NOTES YET</div>')+
+        '<div style="margin-top:8px"><textarea id="n-in-'+t.id+'" placeholder="Update, quote, phone number, blocker…"></textarea>'+
+        '<div class="btnrow" style="margin-top:6px"><button class="tiny" data-post="'+t.id+'">Post note</button>'+
+        '<button class="ghost tiny" data-close="'+t.id+'">Close</button></div></div></div>';
+    }
+    return h+'</div>';
+  }).join("") : '<div class="emptyday">NOTHING HERE — TRY ANOTHER FILTER</div>';
+
+  attachTaskDrag(el);
+  el.querySelectorAll("[data-tog]").forEach(b=>b.onclick=()=>send({op:"toggleTask",id:b.dataset.tog}));
+  el.querySelectorAll("[data-claim]").forEach(b=>b.onclick=()=>{
+    if(needName()) return;
+    send({op:"toggleOwner",id:b.dataset.claim,who:me});
+  });
+  el.querySelectorAll("[data-own]").forEach(b=>b.onclick=()=>{
+    openOwner = openOwner===b.dataset.own ? null : b.dataset.own; render();
+  });
+  el.querySelectorAll("[data-set]").forEach(b=>b.onclick=()=>{
+    const i = b.dataset.set.indexOf("|");
+    send({op:"toggleOwner",id:b.dataset.set.slice(0,i),who:b.dataset.set.slice(i+1)});
+  });
+  el.querySelectorAll("[data-clearown]").forEach(b=>b.onclick=()=>send({op:"clearOwners",id:b.dataset.clearown}));
+  el.querySelectorAll("[data-owndone]").forEach(b=>b.onclick=()=>{openOwner=null;render();});
+  el.querySelectorAll("[data-notes]").forEach(b=>b.onclick=()=>{openNotes[b.dataset.notes]=!openNotes[b.dataset.notes];render();});
+  el.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>{openNotes[b.dataset.close]=false;render();});
+  el.querySelectorAll("[data-edittask]").forEach(b=>b.onclick=()=>{
+    editTask = editTask===b.dataset.edittask ? null : b.dataset.edittask; render();
+  });
+  if(editTask && $("et-save")){
+    $("et-cancel").onclick=()=>{editTask=null;render();};
+    $("et-save").onclick=()=>{
+      const id=editTask, l=val("et-label"), hn=val("et-hint");
+      if(!l.trim()) return;
+      editTask=null;
+      send({op:"editTask",id:id,label:l,hint:hn});
+    };
+  }
+  el.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{
+    const t = all.find(x=>x.id===b.dataset.del);
+    const n = t && t.notes ? t.notes.length : 0;
+    if(confirm('Delete "'+(t?t.label:"this task")+'" for everyone?'+(n?" It has "+n+" note"+(n>1?"s":"")+".":"")+" This can't be undone."))
+      send({op:"deleteTask",id:b.dataset.del});
+  });
+  el.querySelectorAll("[data-dn]").forEach(b=>b.onclick=()=>{
+    const [tid,nid]=b.dataset.dn.split("|");
+    if(confirm("Delete this note for everyone? This can't be undone."))
+      send({op:"deleteNote",id:tid,noteId:nid});
+  });
+  el.querySelectorAll("[data-post]").forEach(b=>b.onclick=()=>{
+    const id=b.dataset.post;
+    const text=val("n-in-"+id);
+    if(!text.trim()) return;
+    send({op:"addNote",id:id,by:me||"someone",text:text});
+  });
+
+  $("tk-count").textContent = done+"/"+all.length+" DONE";
+  $("tk-bar").style.width = (all.length? (done/all.length)*100 : 0)+"%";
+}
+
+/* ---- flight manifest ------------------------------------------------------ */
+
+function renderManifest(){
+  const el = $("manifest");
+  el.innerHTML = ROSTER.map((n,i)=>{
+    const o = S.legs[n]||{};
+    const a = leg(o,"arrFl","arrT"), d = leg(o,"depFl","depT");
+    const open = openPax===n;
+    let h = '<div class="pax"><button class="pax-top" data-n="'+esc(n)+'">'+
+      '<span class="pax-no">'+String(i+1).padStart(2,"0")+'</span>'+
+      '<span style="flex:1"><span class="pax-nm">'+esc(n.toUpperCase())+(me===n?" ·":"")+'</span>'+
+      '<span class="pax-legs"><span>IN '+(a?'<i>'+esc(a)+'</i>':'<i class="gap">·······</i>')+'</span>'+
+      '<span>OUT '+(d?'<i>'+esc(d)+'</i>':'<i class="gap">·······</i>')+'</span></span>'+
+      (o.note?'<span class="pax-legs"><span>'+esc(o.note)+'</span></span>':'')+
+      '</span><span class="dot'+(full(n)?" full":"")+'"></span></button>';
+    if(open){
+      h += '<div class="pax-edit"><div class="grid2">'+
+        '<label class="f"><span>Arrive Thu · flight</span><input type="text" id="e-arrFl" value="'+esc(o.arrFl||"")+'" placeholder="JQ 37" /></label>'+
+        '<label class="f"><span>Lands</span><input type="time" id="e-arrT" value="'+esc(o.arrT||"")+'" /></label>'+
+        '<label class="f"><span>Depart Sun · flight</span><input type="text" id="e-depFl" value="'+esc(o.depFl||"")+'" placeholder="GA 715" /></label>'+
+        '<label class="f"><span>Takes off</span><input type="time" id="e-depT" value="'+esc(o.depT||"")+'" /></label></div>'+
+        '<label class="f"><span>Note, optional</span><input type="text" id="e-note" value="'+esc(o.note||"")+'" placeholder="Staying an extra night, etc" /></label>'+
+        '<div class="btnrow"><button class="tiny" id="e-save">Save</button>'+
+        '<button class="ghost tiny" id="e-cancel">Cancel</button></div></div>';
+    }
+    return h+'</div>';
+  }).join("");
+
+  el.querySelectorAll(".pax-top").forEach(b=>b.onclick=()=>{openPax = openPax===b.dataset.n ? null : b.dataset.n; render();});
+  if(openPax){
+    $("e-cancel").onclick=()=>{openPax=null;render();};
+    $("e-save").onclick=()=>{
+      const n = openPax; openPax=null;
+      send({op:"setLeg",name:n,arrFl:val("e-arrFl"),arrT:val("e-arrT"),depFl:val("e-depFl"),depT:val("e-depT"),note:val("e-note")});
+    };
+  }
+  const f = ROSTER.filter(full).length;
+  $("mf-count").textContent = f<15 ? (15-f)+" still to add" : "Complete";
+  $("ct-filled").textContent = f+"/15";
+}
+
+/* ---- recommendations ------------------------------------------------------
+   Reference data, not shared state — nobody needs to edit it and it would only
+   bloat Redis. Coordinates were geocoded once and name-checked; anything that
+   couldn't be verified carries no pin rather than a guessed one, and every
+   entry links out to Google Maps regardless.                                  */
+
+const CATS = [
+  ["eat","Eat & drink"],["beach","Beach clubs"],["do","Activities"],
+  ["spa","Spa & massage"],["shop","Shopping"],["sun","Sunday & airport"],["svc","Book for the villa"]
+];
+const CAT2TYPE = {eat:"food",beach:"beach",do:"activity",spa:"spa",shop:"activity",sun:"activity",svc:"food"};
+
+const RECS = [
+  // ---- eat & drink
+  {id:"islandwok",cat:"eat",n:"Island Wok",a:"Berawa",r:4.8,d:"1.2 km · 5 min",c:"80–150k pp",t:"Chinese/Thai. Generous portions, built for group orders — reviewers note it's a short walk from the nearby villas."},
+  {id:"loveupizza",cat:"eat",n:"Love U Pizza",a:"Canggu",r:4.9,d:"3 km · 10 min",c:"80–150k pp",t:"Open 24 hours. One reviewer had a 12-pizza group order delivered without drama."},
+  {id:"barny",cat:"eat",n:"BARNY Smash Burger",a:"Canggu",r:4.7,d:"3 km · 10 min",c:"80–150k pp",t:"Open 6am–5:30am. The backup for late stragglers on arrival night."},
+  {id:"louies",cat:"eat",n:"Louie's New York Pizza",a:"Batu Bolong",r:4.8,d:"4.5 km · 15 min",c:"80–150k pp",t:"NY-style. Takeaway and Grab-friendly, consistent.",lat:-8.64970,lng:115.13726},
+  {id:"nuris",cat:"eat",n:"Naughty Nuri's",a:"Seminyak / Kerobokan",r:4.7,rv:"14,645",d:"2.2 km · 12–18 min",c:"150–300k pp",t:"The pork ribs. Book ahead — queues at peak. Aim for 12–12:30 lunch or an early 6pm dinner to skip the wait.",lat:-8.67751,lng:115.16771},
+  {id:"sarikembar",cat:"eat",n:"Babi Guling Sari Kembar 99",a:"Jl. Teuku Umar Barat",r:4.3,d:"3.3 km · 15–20 min",c:"50–100k pp",t:"Cheap, generous, and full of Balinese locals — which is the sign you want."},
+  {id:"pakmalen",cat:"eat",n:"Warung Babi Guling Pak Malen",a:"Sunset Road",r:4.4,d:"~20 min",c:"50–100k pp",t:"The better-known one. More tourist-polished, AC seating, if you'd rather that than a warung.",lat:-8.68480,lng:115.16908},
+  {id:"smashe",cat:"eat",n:"Smashe Burger",a:"Jl. Padang Linjong",r:4.8,d:"3 km · 12–18 min",c:"100–150k pp",t:"Top-rated of the three similarly-named smash burger joints around Canggu. Good lunch stop between the surf spots and Seminyak."},
+  {id:"blou",cat:"eat",n:"Blou Cafe",a:"Canggu",r:4.8,d:"~3 km · 12 min",c:"80–150k pp",t:"Pasta and brunch, sitting right between the Batu Bolong surf breaks and the beach clubs. Easy add-on lunch."},
+  {id:"kawisari",cat:"eat",n:"Kawisari Coffee Farm",a:"Batu Bolong",r:4.9,d:"2.6 km · 12 min",c:"40–90k",t:"Javanese fried rice and donut-cup coffee. Quirky, and right on the surf-school stretch.",lat:-8.65874,lng:115.13063},
+  {id:"milkmadu",cat:"eat",n:"Milk & Madu",a:"Berawa",r:4.7,rv:"8,359",d:"1.2 km · 5–8 min",c:"120–180k pp",t:"The Berawa branch, not Beach Road — bigger and easier for a table of 15. Call ahead for Saturday lunch.",lat:-8.66091,lng:115.14577},
+  {id:"goatfather",cat:"eat",n:"The Goat Father",a:"Canggu",r:4.8,rv:"356",d:"3 km · 12 min",c:"40–90k",t:"Single-origin coffee and an almond croissant worth the detour."},
+  {id:"revolver",cat:"eat",n:"Revolver Espresso",a:"Seminyak",r:4.6,rv:"2,796",d:"3 km · 12 min",c:"40–90k",t:"Coffee shakes and acai bowls.",lat:-8.68445,lng:115.15797},
+  {id:"gigisusu",cat:"eat",n:"Gigi Susu",a:"Batu Bolong",r:4.8,rv:"8,874",d:"3.3 km · 13 min",c:"40–90k",t:"The viral egg bun. Expect a queue.",lat:-8.65390,lng:115.13210},
+  {id:"sweetescape",cat:"eat",n:"The Sweet Escape Bakery",a:"Batu Mejan",r:4.8,d:"~4 km · 15 min",c:"400–800k",t:"For the August babies. Custom birthday cake design and delivery, gluten-free available."},
+  {id:"okas",cat:"eat",n:"Oka's Bakery",a:"Batu Bolong",r:4.5,d:"3.1 km · 13 min",c:"400–600k",t:"The lighter, healthier cake option if you'd rather not go full frosting.",lat:-8.64687,lng:115.14022},
+
+  // ---- beach clubs
+  {id:"finns",cat:"beach",n:"FINNS Beach Club",a:"Berawa",r:4.7,rv:"45,961",d:"1.2 km · 5–8 min",c:"Free · daybed 500k+",t:"Closest to the villa. Lively, party-leaning, 16+ after a certain hour."},
+  {id:"atlas",cat:"beach",n:"Atlas Beach Club",a:"Berawa",r:4.7,rv:"16,842",d:"1.3 km · 8 min",c:"Free · daybed 500k+",t:"Recommended over Finns on a Saturday — reviewers say it's less packed and rowdy, with multiple pools and full service."},
+  {id:"labrisa",cat:"beach",n:"La Brisa",a:"Echo Beach",r:4.6,rv:"22,328",d:"5 km · 15–18 min",c:"Free · min spend",t:"The sunset one. Boho, driftwood, worth the extra 10 minutes.",lat:-8.65458,lng:115.12481},
+
+  // ---- activities
+  {id:"kokosurf",cat:"do",n:"Koko Surf School",a:"Berawa",r:5.0,rv:"65",d:"1 km · 5–8 min",c:"350–450k pp",t:"Closest surf option to the villa. 1.5–2hr group lesson, board and instructor included."},
+  {id:"diansurf",cat:"do",n:"Dian Surf School",a:"Batu Bolong",r:4.9,rv:"722",d:"2.3 km · 12–15 min",c:"350–450k pp",t:"The most-reviewed school on the strip. Beginner-friendly."},
+  {id:"cocosaelan",cat:"do",n:"Surf Coco Saelan",a:"Batu Bolong",r:4.9,rv:"530",d:"2.5 km · 12 min",c:"350–450k pp",t:"WhatsApp booking only — no online form."},
+  {id:"islandfitness",cat:"do",n:"Island Fitness / Island Sports",a:"Jl. Karang Suwung, Tibubeneng",r:4.9,rv:"63",d:"1.8 km · 8–12 min",c:"200–450k pp",t:"Hyrox training, sauna, ice baths, infinity pool, padel, indoor golf. Coach Johnny Tieu (@quacktieu) trains here — message his Instagram to confirm he's on that morning. The recovery area alone is worth 90 min even for the non-gym people.",lat:-8.65424,lng:115.14607,ap:1},
+  {id:"picklebali",cat:"do",n:"PickleBali Clubs",a:"Jl. Raya Padonan, Dalung",r:5.0,rv:"375",d:"5.3 km · 20–25 min",c:"150–250k/court",t:"Saturday's locked-in one. 3 courts — book 2–3 privately for the 2-hour block. Add a coach (~300–400k/hr) to run a beginner clinic alongside open play. Vans leave 8:30am.",lat:-8.62266,lng:115.16575,ap:1},
+  {id:"quadbikes",cat:"do",n:"Bali Quad Bikes",a:"Ubud / Payangan trails",r:5.0,rv:"777",d:"40–50 min each way",c:"350–550k pp",t:"All-inclusive: hotel pickup, lunch, gear, can bolt on rafting. The transfer eats the 8am–3pm window, so treat it as a half-day subgroup thing rather than something that fits around beach time.",lat:-8.32901,lng:115.27333,ap:1},
+  {id:"atvadventure",cat:"do",n:"Bali ATV Adventure",a:"Payangan",r:4.9,rv:"361",d:"~40 min each way",c:"350–550k pp",t:"Family-friendly and safety-focused. Same trade-off on travel time."},
+
+  // ---- spa & massage
+  {id:"outcall",cat:"spa",n:"Outcall Bali Massage",a:"In-villa · home service",r:4.9,rv:"158",d:"Comes to you",c:"200–350k pp/hr",t:"Covers Kerobokan and Berawa, 9am–12am. Can send several therapists at once, which is what you need for arrival night. Message 2–3 days ahead."},
+  {id:"invilla",cat:"spa",n:"Massage in Villa Bali",a:"In-villa · Pererenan",r:5.0,rv:"27",d:"Comes to you",c:"200–350k pp/hr",t:"Open 24 hours. Reviewers specifically praise the villa setup — own linens, oil and music.",tel:"+62 821-2144-0536"},
+  {id:"momentum",cat:"spa",n:"Momentum Massage",a:"In-villa · Berawa",r:5.0,rv:"15",d:"5 min away",c:"200–350k pp/hr",t:"Based right in Berawa. Multiple therapists available same night.",tel:"+62 819-9637-3605"},
+  {id:"hoya",cat:"spa",n:"HOYA SPA Berawa",a:"Berawa",r:4.9,rv:"820",d:"1.2 km · 5–8 min",c:"150–350k/hr",t:"Open till 11pm. No-frills, strong deep tissue, best value of the walk-ins."},
+  {id:"reborn",cat:"spa",n:"REBORN BALI",a:"Canggu",r:4.9,rv:"671",d:"1.3 km · 5–8 min",c:"150–350k/hr",t:"Closest walk-in. Tuina and therapeutic focus rather than fluffy spa."},
+  {id:"alma",cat:"spa",n:"Alma Spa Bali",a:"Canggu",r:4.9,rv:"397",d:"1.5 km · 8 min",c:"150–350k/hr",t:"The photogenic one. Hot stone is what reviewers rate."},
+  {id:"fajar",cat:"spa",n:"Fajar Bali Spa",a:"Batu Bolong",r:4.9,d:"3 km · 13 min",c:"150–350k/hr",t:"Open till 11pm, takes walk-ins and late bookings.",lat:-8.64895,lng:115.13809},
+  {id:"kou",cat:"spa",n:"KOU Spa",a:"Seminyak",r:4.9,rv:"869",d:"3.4 km · 12 min",c:"150–350k/hr",t:"Elegant and calm. Better for a smaller subgroup than the whole 15.",lat:-8.64167,lng:115.14536},
+
+  // ---- shopping
+  {id:"soap",cat:"shop",n:"Republic of Soap",a:"Denpasar Barat",r:4.6,rv:"308",d:"3.2 km · 15–20 min",c:"150–400k",t:"Custom perfume and scent-making, refillable body care. Budget 45–60 min if you're actually making something rather than browsing.",lat:-8.68132,lng:115.17595},
+  {id:"galeria",cat:"shop",n:"Mal Bali Galeria",a:"Kuta",r:4.5,rv:"25,918",d:"6.8 km · 20 min",c:"—",t:"Closest major mall to the airport, and 3–5 min from Kingdomcity — which is why it's the Sunday shopping stop. H&M, Uniqlo, Planet Sports, big supermarket, food court.",lat:-8.72346,lng:115.18444},
+  {id:"beachwalk",cat:"shop",n:"Beachwalk Shopping Center",a:"Kuta Beach",r:4.5,rv:"47,512",d:"15–20 min from airport",c:"—",t:"More boutique and international brands, but further out. Only worth it if you leave Bali Galeria early.",lat:-8.71701,lng:115.16876},
+
+  // ---- sunday & airport
+  {id:"kingdomcity",cat:"sun",n:"Kingdomcity Bali",a:"Jl. Sunset Road No.100, Kuta",r:5.0,rv:"33",d:"6.5 km · 20–25 min",c:"—",t:"Sunday service 10am, English-speaking international congregation. Mal Bali Galeria is 3–5 min away, so church and shopping cluster neatly before the airport run."},
+  {id:"dps",cat:"sun",n:"Ngurah Rai Airport (DPS)",a:"Tuban",d:"8.3 km · 35–75 min",c:"—",t:"Flight 8:40pm. Allow 3 hours on a Sunday, and budget ~90 min before boarding for 15 people to clear check-in and security together.",lat:-8.74652,lng:115.16737},
+  {id:"coffeeclub",cat:"sun",n:"The Coffee Club",a:"International departures",r:4.9,rv:"12,284",d:"Airside",c:"—",t:"Sit-down meal and coffee. Eat here after check-in rather than rushing something before it."},
+  {id:"revolverdps",cat:"sun",n:"Revolver",a:"Airport, level 3",r:4.7,rv:"3,460",d:"Airside",c:"—",t:"Full breakfast and brunch menu if you want a proper last meal."},
+  {id:"balisky",cat:"sun",n:"Bali Sky Cafe",a:"Inside departures",r:4.8,rv:"3,481",d:"Airside",c:"—",t:"Open 24 hours, takeaway to your gate."},
+  {id:"kafin",cat:"sun",n:"Kafi:n DPS",a:"Arrivals level",r:4.7,rv:"118",d:"Landside",c:"—",t:"Calmer and quieter, good wifi if anyone needs to work while waiting."},
+
+  // ---- book for the villa
+  {id:"mimpi",cat:"svc",n:"Mimpi Catering Bali",a:"Private chef · catering",r:5.0,rv:"135",d:"Comes to you",c:"400–700k pp",t:"Best fit for Saturday. Reviewers highlight birthday dinners, a BBQ plus dessert grazing table, and they'll help source decor and a sound system — so it's a party setup, not just food."},
+  {id:"canggchef",cat:"svc",n:"Canggu Private Chef",a:"Private chef",r:4.6,rv:"28",d:"Comes to you",c:"400–700k pp",t:"Reviewers mention birthday celebrations specifically, menu tailored to the group, kitchen left spotless."},
+  {id:"mychef",cat:"svc",n:"myCHEF Private Chef",a:"Private chef",r:5.0,rv:"8",d:"Comes to you",c:"400–700k pp",t:"Multi-course, described as Michelin-quality by reviewers. Better for a smaller, more intimate sit-down."},
+  {id:"vans",cat:"svc",n:"Hiace vans + driver",a:"Via the villa manager",d:"Pre-book",c:"350–500k/van",t:"Two 12–15 seaters. Book through the villa manager or a local WhatsApp driver rather than trying to mass-book Grab. Needed for the Thu airport run, Sat pickleball and the Sun departure."},
+  {id:"villafirst",cat:"svc",n:"Ask the villa first",a:"Before booking any of the above",t:"Is there an outside catering fee? Is there a noise curfew? Both change the Saturday plan, and both are cheaper to find out now than on the night."},
+];
+
+const COSTS = [
+  ["Thu massage","200–350k"],["Thu dinner, takeaway","80–150k"],["Fri surf lesson","350–450k"],
+  ["Fri gym / Hyrox","200–450k"],["Fri spa","150–350k"],["Fri lunch + dinner","150–300k"],
+  ["Sat pickleball","50–100k"],["Sat group lunch","120–180k"],["Sat villa dinner, private chef","400–700k"],
+  ["Sun shopping + cafes","100–300k"],["Vans, share of","200–300k"]
+];
+
+let recCat = localStorage.getItem("bali.reccat") || "eat";
+if(!CATS.some(c=>c[0]===recCat)) recCat = "eat";
+let rmap = null, rpins = [], lastRecSig = "";
+
+const catRecs = ()=>RECS.filter(r=>r.cat===recCat);
+const mapsUrl = (r)=>"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(r.n+" "+(r.a||"")+" Bali");
+
+let rremeasureT = null;
+function rremeasure(){
+  if(!rmap) return;
+  clearTimeout(rremeasureT);
+  rremeasureT = setTimeout(()=>{ try{ rmap.invalidateSize(); lastRecSig=""; syncRecMap(); }catch(e){} },150);
+}
+function initRecMap(){
+  if(rmap || !window.L || !$("rcmap")) return;
+  try{
+    rmap = L.map("rcmap",{scrollWheelZoom:false}).setView(BALI,10);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
+      maxZoom:19, attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(rmap);
+    if(window.ResizeObserver) new ResizeObserver(rremeasure).observe($("rcmap"));
+    setTimeout(rremeasure,300); setTimeout(rremeasure,1500);
+  }catch(e){ rmap = null; }
+}
+
+function syncRecMap(){
+  if(!window.L){ $("rcmap").innerHTML='<div class="map-off">Map didn\'t load. The list below still works, and every card opens in Google Maps.</div>'; return; }
+  initRecMap();
+  if(!rmap) return;
+  const list = catRecs();
+  const pinned = list.map((r,i)=>({...r,no:i+1})).filter(r=>r.lat!=null);
+  const b = based();
+  $("rc-note").textContent = pinned.length+" OF "+list.length+" PINNED";
+  $("rc-legend").textContent = "TAP A CARD TO OPEN IN MAPS";
+
+  const sig = recCat+"|"+(b?b.lat:"")+"|"+pinned.map(r=>r.id+r.no).join(",");
+  if(sig===lastRecSig) return;
+  lastRecSig = sig;
+
+  rpins.forEach(m=>{ try{ rmap.removeLayer(m); }catch(e){} });
+  rpins = [];
+  if(b){
+    const bm = L.marker([b.lat,b.lng],{icon:L.divIcon({className:"",html:'<div class="mbase"><i>🏠</i></div>',
+      iconSize:[30,30],iconAnchor:[15,30],popupAnchor:[0,-28]}),zIndexOffset:-500}).addTo(rmap);
+    bm.bindPopup('<div class="pin-t">Base</div><div class="pin-a">'+esc(b.label)+'</div>');
+    rpins.push(bm);
+  }
+  pinned.forEach(r=>{
+    const m = L.marker([r.lat,r.lng],{icon:L.divIcon({className:"",
+      html:'<div class="mpin"><i>'+r.no+'</i></div>',iconSize:[26,26],iconAnchor:[13,26],popupAnchor:[0,-24]})}).addTo(rmap);
+    m.bindPopup('<div class="pin-t">'+r.no+(r.r?" · "+r.r+"★":"")+(r.ap?" · approx":"")+'</div>'+
+      '<div class="pin-a">'+esc(r.n)+'</div>'+(r.a?'<div class="pin-l">'+esc(r.a)+'</div>':'')+
+      '<div style="margin-top:6px"><a href="'+esc(mapsUrl(r))+'" target="_blank" rel="noopener">Open in Maps →</a></div>');
+    rpins.push(m);
+  });
+
+  const frame = pinned.map(r=>[r.lat,r.lng]);
+  if(b) frame.push([b.lat,b.lng]);
+  if(frame.length>1) rmap.fitBounds(L.latLngBounds(frame),{padding:[40,40],maxZoom:14});
+  else if(frame.length===1) rmap.setView(frame[0],14);
+  else rmap.setView(BALI,10);
+  setTimeout(()=>{ try{ rmap.invalidateSize(); }catch(e){} },0);
+}
+
+function renderRecs(){
+  $("rc-cats").innerHTML = CATS.map(c=>{
+    const n = RECS.filter(r=>r.cat===c[0]).length;
+    return '<button class="chip'+(recCat===c[0]?" on":"")+'" data-rc="'+c[0]+'">'+c[1]+' '+n+'</button>';
+  }).join("");
+  $("rc-cats").querySelectorAll("[data-rc]").forEach(b=>b.onclick=()=>{
+    recCat=b.dataset.rc;localStorage.setItem("bali.reccat",recCat);render();
+  });
+
+  const list = catRecs();
+  const same = (a,b)=>String(a||"").trim().toLowerCase()===String(b||"").trim().toLowerCase();
+  const inPlan = (r)=>(S.sched||[]).some(x=>same(x.activity,r.n));
+  const asIdea = (r)=>(S.opts||[]).find(o=>same(o.label,r.n));
+  const d = dayInfo(day);
+
+  $("recs").innerHTML = list.map((r,i)=>{
+    const planned = inPlan(r), idea = asIdea(r);
+    const votes = idea ? (S.votes[idea.id]||[]).length : 0;
+    let flag = "";
+    if(planned) flag = ' <span class="pickchip">In the plan</span>';
+    else if(idea) flag = ' <span class="pickchip vote">Up for vote'+(votes?" · "+votes:"")+'</span>';
+    return '<div class="rec'+(planned||idea?" pick":"")+'">'+
+      '<div class="rec-no'+(r.lat==null?" off":"")+'">'+(r.lat!=null?(i+1):"–")+'</div>'+
+      '<div class="rec-nm">'+esc(r.n)+flag+'</div>'+
+      '<div class="rec-rt">'+(r.r?r.r+"★":"")+(r.rv?'<i>'+esc(r.rv)+'</i>':'')+'</div>'+
+      '<div class="rec-mt">'+[r.a,r.d,r.c&&r.c!=="—"?"<b>"+esc(r.c)+"</b>":""].filter(Boolean).join(" · ")+
+        (r.ap?' · <b>approx pin</b>':'')+'</div>'+
+      '<div class="rec-nt">'+esc(r.t||"")+'</div>'+
+      '<div class="rec-ac">'+
+        '<a class="tag" href="'+esc(mapsUrl(r))+'" target="_blank" rel="noopener">Open in Maps</a>'+
+        (r.tel?'<a class="tag" href="tel:'+esc(r.tel.replace(/\s/g,""))+'">'+esc(r.tel)+'</a>':'')+
+        (r.id==="villafirst"?"":
+          (idea?'<button class="tag" data-goidea="'+esc(idea.id)+'">See the vote →</button>'
+              :'<button class="tag go" data-voterec="'+r.id+'">+ Add to vote</button>')+
+          '<button class="tag" data-addrec="'+r.id+'">+ Straight to '+d.dow+' '+d.id+'</button>')+
+      '</div></div>';
+  }).join("");
+
+  $("recs").querySelectorAll("[data-voterec]").forEach(b=>b.onclick=()=>{
+    const r = RECS.find(x=>x.id===b.dataset.voterec);
+    if(!r) return;
+    send({op:"addOpt",label:r.n,day:day,
+          when:[r.a,r.d].filter(Boolean).join(" · ").slice(0,40),
+          note:[(r.r?r.r+"★":""),r.c&&r.c!=="—"?r.c:"",r.t].filter(Boolean).join(" · ").slice(0,200),
+          loc:r.n+(r.a?", "+r.a:"")+", Bali",lat:r.lat,lng:r.lng,by:me});
+    $("sec-vote").scrollIntoView({block:"start"});
+  });
+  $("recs").querySelectorAll("[data-goidea]").forEach(b=>b.onclick=()=>{
+    const o = (S.opts||[]).find(x=>x.id===b.dataset.goidea);
+    if(o && o.day && o.day!==day){ day=o.day; localStorage.setItem("bali.day",day); render(); }
+    $("sec-vote").scrollIntoView({block:"start"});
+  });
+
+  $("recs").querySelectorAll("[data-addrec]").forEach(b=>b.onclick=()=>{
+    const r = RECS.find(x=>x.id===b.dataset.addrec);
+    if(!r) return;
+    const note = [r.r?r.r+"★":"", r.d, r.t].filter(Boolean).join(" · ").slice(0,240);
+    send({op:"addSched",day:day,activity:r.n,type:CAT2TYPE[r.cat]||"activity",
+          loc:r.n+(r.a?", "+r.a:"")+", Bali",lat:r.lat,lng:r.lng,
+          cost:(r.c&&r.c!=="—")?r.c:"",note:note,by:me});
+    $("sec-itin").scrollIntoView({block:"start"});
+  });
+
+  $("rc-count").textContent = RECS.length+" PLACES";
+  $("costs").innerHTML = COSTS.map(c=>'<div class="rrow"><span class="rk">'+esc(c[0])+'</span><span class="rv">IDR '+esc(c[1])+'</span></div>').join("");
+}
+
+/* ---- render --------------------------------------------------------------- */
+
+function render(){
+  renderWho();
+  if(!unlocked()) return;
+  renderNav();
+  renderSched();
+  syncMap();
+  renderVotes();
+  renderTasks();
+  renderManifest();
+  renderRecs();
+  syncRecMap();
+}
+
+/* ---- wiring --------------------------------------------------------------- */
+
+$("hide-tips").onclick=()=>{$("tips").className="tips hide";localStorage.setItem("bali.tips","0");};
+if(localStorage.getItem("bali.tips")==="0") $("tips").className="tips hide";
+$("sync-now").onclick=()=>pull(true);
+
+wireFold("mf");
+wireFold("ga");
+wireFold("cs");
+wireAdd("sched-add");
+wireAdd("opt-add");
+wireAdd("task-add");
+
+$("new-sc-type").innerHTML = TYPES.map(t=>'<option value="'+t[0]+'">'+t[1]+' '+t[2]+'</option>').join("");
+$("new-sc-type").value = "activity";
+$("new-opt-day").innerHTML = '<option value="">Any time</option>'+
+  DAYS.map(d=>'<option value="'+d.id+'">Day '+d.n+' · '+d.dow+' '+d.id+'</option>').join("");
+
+$("add-sc").onclick=()=>{
+  const activity=val("new-sc"), loc=val("new-sc-loc");
+  if(!activity.trim()) return;
+  const op = {op:"addSched",day:day,activity:activity,time:val("new-sc-time"),dur:val("new-sc-dur"),
+              type:val("new-sc-type"),everyone:$("new-sc-everyone").checked,
+              loc:loc,cost:val("new-sc-cost"),note:val("new-sc-note"),by:me};
+  ["new-sc","new-sc-time","new-sc-dur","new-sc-loc","new-sc-cost","new-sc-note"].forEach(i=>{$(i).value="";});
+  $("new-sc-everyone").checked = false;
+  if(loc.trim()) $("sync-txt").textContent = "Finding that place…";
+  send(op);
+};
+$("new-sc").addEventListener("keydown",e=>{if(e.key==="Enter")$("add-sc").click();});
+
+$("add-opt").onclick=()=>{
+  const label=val("new-opt");
+  if(!label.trim()) return;
+  const op = {op:"addOpt",label:label,day:val("new-opt-day"),when:val("new-opt-when"),note:val("new-opt-note"),by:me};
+  ["new-opt","new-opt-when","new-opt-note"].forEach(i=>{$(i).value="";});
+  send(op);
+};
+$("new-opt").addEventListener("keydown",e=>{if(e.key==="Enter")$("add-opt").click();});
+
+$("add-task").onclick=()=>{
+  const label=val("new-task"), hint=val("new-task-hint");
+  if(!label.trim()) return;
+  $("new-task").value="";$("new-task-hint").value="";
+  send({op:"addTask",label:label,hint:hint,by:me});
+};
+$("new-task").addEventListener("keydown",e=>{if(e.key==="Enter")$("add-task").click();});
+
+const days = Math.max(0, Math.ceil((new Date("2026-08-27T00:00:00") - new Date())/86400000));
+$("ct-days").textContent = days;
+
+addEventListener("resize",()=>{remeasure();rremeasure();});
+
+const busy = ()=> openPax || editOpt || editTask || editSched || editDayTitle || editBase || dragging;
+render();
+pull(true);
+setInterval(()=>{ if(!document.hidden && !busy()) pull(false); }, 15000);
+document.addEventListener("visibilitychange",()=>{
+  if(document.hidden) return;
+  remeasure(); rremeasure();
+  if(!busy()) pull(false);
+});
+</script>
+</body>
+</html>
